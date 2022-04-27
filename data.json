@@ -1,0 +1,17 @@
+{
+    "HttpServerPort": "18080",
+    "MySQL": {
+        "Host": "127.0.0.1",
+        "Port": "3306",
+        "UserName": "Test",
+        "Password": "AJK8d9sfjc90sd8f9cxSJD@09^8d#N*&DFDJDNDaJJJdsf090905",
+        "DataBase": "Test"
+    },
+    "SimpleServers": [
+        {
+            "Control": "/Login",
+            "Parameters": "UserName, Password",
+            "SQLString": "call test.sp_TestLogin"
+        }
+    ]
+}

@@ -32,8 +32,9 @@
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'" Label="QtSettings">
     <QtInstall>20211214Qt6</QtInstall>
-    <QtModules>core</QtModules>
+    <QtModules>core;sql;network</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
+    <QtDeploy>true</QtDeploy>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="QtSettings">
     <QtInstall>20211214Qt6</QtInstall>
@@ -95,6 +96,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mysql.cpp" />
     <ClCompile Include="RequestParse.cpp" />
+    <ClCompile Include="SimpleServers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="httpserver.h" />
@@ -102,6 +104,7 @@
   <ItemGroup>
     <ClInclude Include="mysql.h" />
     <ClInclude Include="RequestParse.h" />
+    <ClInclude Include="SimpleServers.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

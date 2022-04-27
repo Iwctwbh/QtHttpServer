@@ -6,6 +6,7 @@
 #include "httpserver.h"
 #include "mysql.h"
 #include "RequestParse.h"
+#include "SimpleServers.h"
 
 void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp, QByteArray *byteArr_ResponseData);
 
@@ -13,41 +14,54 @@ void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp,
 
 typedef struct
 {
-	QByteArray *Control;
 	QList<QByteArray> *Parameter;
 	QByteArray *SQLString;
 
 } SimpleServer;
 
-QMap<SimpleServer *, QByteArray(*)(QByteArray *)> *map_Function = new QMap<SimpleServer *, QByteArray(*)(QByteArray *)>();
-
-QMap<QUuid, SimpleServer> *Map_Servers = new QMap<QUuid, SimpleServer>();
+//QMap<SimpleServer *, QByteArray(*)(QByteArray *)> *map_Function = new QMap<SimpleServer *, QByteArray(*)(QByteArray *)>();
 
 Mysql *mysql = new Mysql("127.0.0.1", 3306, "Test", "Test", "AJK8d9sfjc90sd8f9cxSJD@09^8d#N*&DFDJDNDaJJJdsf090905", "dbcon1");
+
+SimpleServers *sserv = new SimpleServers();
 
 int main(int argc, char *argv[])
 {
 	QCoreApplication a(argc, argv);
 
-	SimpleServer *abc = new SimpleServer
-	{
-		new QByteArray{"/Login"},
-		new QList<QByteArray>{"UserName", "Password"},
-		new QByteArray{"call test.sp_TestLogin"}
-	};
-
 	QUuid id = QUuid::createUuid();
 
-	while (Map_Servers->find(id) != Map_Servers->end())
+	QFile file{ "data.json" };
+	if (!file.open(QIODevice::ReadOnly))
 	{
-		id = QUuid::createUuid();
+		qDebug() << "Loading file error";
 	}
 
-	Map_Servers->insert(id, *abc);
+	QByteArray filestream = file.readAll();
+
+	QJsonDocument qjd = QJsonDocument::fromJson(filestream);
+	bool flag = qjd.isObject();
+
+	QJsonObject *QJsonObject_Temp = new QJsonObject(QJsonDocument::fromJson(filestream).object());
+	QJsonObject *QJsonObject_MySQL_Temp = new QJsonObject(QJsonObject_Temp->take("MySQL").toObject());
+	delete mysql;
+	mysql = new Mysql(
+		QJsonObject_MySQL_Temp->take("Host").toString(),
+		QJsonObject_MySQL_Temp->take("Port").toString().toInt(),
+		QJsonObject_MySQL_Temp->take("DataBase").toString(),
+		QJsonObject_MySQL_Temp->take("UserName").toString(),
+		QJsonObject_MySQL_Temp->take("Password").toString(),
+		"dbcon1");
+
+	QJsonArray *arr = new QJsonArray(QJsonObject_Temp->take("SimpleServers").toArray());
+	qDebug() << *arr;
+	sserv->InitSimpleServersFromJson(arr);
+
+	quint16 HttpServerPort = QJsonObject_Temp->take("HttpServerPort").toString().toInt();
 
 	// HttpServer启动
 	HttpServer::instance().LogicControl = LogicControl; // 配置处理主函数
-	HttpServer::instance().run(QHostAddress::Any, 18080); // 设置端口
+	HttpServer::instance().run(QHostAddress::Any, HttpServerPort); // 设置端口
 
 	// 连接数据库
 	mysql->connect();
@@ -75,11 +89,11 @@ void ConvertStringToJson_ptr(QString *str_Json, QJsonObject *json_Json)
 	}
 }
 
-QByteArray TestFunction(QByteArray *PostData, SimpleServer *SServer)
+QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServer)
 {
 	QJsonObject *JsonObject = new QJsonObject(QJsonDocument::fromJson(*PostData).object());
 	QString *String_SQLParameters = new QString();
-	for (auto s : *SServer->Parameter)
+	for (auto s : *SServer->Parameters)
 	{
 		if (!String_SQLParameters->isEmpty())
 		{
@@ -125,7 +139,7 @@ void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp,
 	//auto iter = map_Function->find(*requestParsing->GetParameter());
 	QByteArray Parameter = *requestParsing->GetParameter();
 	bool flag = false;
-	SimpleServer *simpleserver = new SimpleServer();
+	SimpleServers::SimpleServer *simpleserver = new SimpleServers::SimpleServer();
 	/*foreach(SimpleServer * s, map_Function)
 	{
 		if (Parameter.compare(*s->Control))
@@ -136,12 +150,12 @@ void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp,
 		}
 	}*/
 
-	for (auto iter_Temp = Map_Servers->begin(); iter_Temp != Map_Servers->end(); ++iter_Temp)
+	for (auto iter_Temp = sserv->Map_SimpleServers->begin(); iter_Temp != sserv->Map_SimpleServers->end(); ++iter_Temp)
 	{
-		if (!Parameter.compare(*iter_Temp.value().Control))
+		if (!Parameter.compare(*iter_Temp.key()))
 		{
 			flag = true;
-			simpleserver = new SimpleServer(iter_Temp.value());
+			simpleserver = iter_Temp.value();
 			break;
 		}
 	}
