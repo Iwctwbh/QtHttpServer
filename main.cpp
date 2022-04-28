@@ -21,52 +21,104 @@ typedef struct
 
 //QMap<SimpleServer *, QByteArray(*)(QByteArray *)> *map_Function = new QMap<SimpleServer *, QByteArray(*)(QByteArray *)>();
 
-Mysql *mysql = new Mysql("127.0.0.1", 3306, "Test", "Test", "AJK8d9sfjc90sd8f9cxSJD@09^8d#N*&DFDJDNDaJJJdsf090905", "dbcon1");
+Mysql *mysql;
 
 SimpleServers *sserv = new SimpleServers();
 
 int main(int argc, char *argv[])
 {
-	QCoreApplication a(argc, argv);
+	auto *a = new QCoreApplication{argc, argv};
 
-	QUuid id = QUuid::createUuid();
+	//QUuid id = QUuid::createUuid();
 
-	QFile file{ "data.json" };
-	if (!file.open(QIODevice::ReadOnly))
+	QScopedPointer<QFile> t_pFile{new QFile{ "data.json" }};
+
+	if (!t_pFile->open(QIODevice::ReadOnly))
 	{
 		qDebug() << "Loading file error";
 	}
 
-	QByteArray filestream = file.readAll();
+	QFileInfo t_pFileInfo{"data.json"};
 
-	QJsonDocument qjd = QJsonDocument::fromJson(filestream);
-	bool flag = qjd.isObject();
+	if (t_pFileInfo.exists())
+	{
+		qDebug() << "data.json exists";
+		if (t_pFileInfo.isReadable())
+		{
+			qDebug() << "data.json is readable";
+			QScopedPointer<QFile> t_pFile{new QFile{"data.json"}};
+			if (t_pFile->open(QIODevice::ReadOnly))
+			{
+				qDebug() << "data.json open success";
+				QByteArray filestream = t_pFile->readAll();
+				QScopedPointer<QJsonDocument> t_pJsDoc{new QJsonDocument{ QJsonDocument::fromJson(filestream) }};
+				if (t_pJsDoc->isObject())
+				{
+					qDebug() << "data.json format is correct";
+					QScopedPointer<QJsonObject> t_pJsObj{new QJsonObject{t_pJsDoc->object()}};
+					QScopedPointer<QJsonObject> t_pJsMySQL{new QJsonObject(t_pJsObj->value("MySQL").toObject())};
+					mysql = new Mysql(
+						t_pJsMySQL->value("Host").toString(),
+						t_pJsMySQL->value("Port").toString().toInt(),
+						t_pJsMySQL->value("DataBase").toString(),
+						t_pJsMySQL->value("UserName").toString(),
+						t_pJsMySQL->value("Password").toString(),
+						"dbcon1");
 
-	QJsonObject *QJsonObject_Temp = new QJsonObject(QJsonDocument::fromJson(filestream).object());
-	QJsonObject *QJsonObject_MySQL_Temp = new QJsonObject(QJsonObject_Temp->take("MySQL").toObject());
-	delete mysql;
-	mysql = new Mysql(
-		QJsonObject_MySQL_Temp->take("Host").toString(),
-		QJsonObject_MySQL_Temp->take("Port").toString().toInt(),
-		QJsonObject_MySQL_Temp->take("DataBase").toString(),
-		QJsonObject_MySQL_Temp->take("UserName").toString(),
-		QJsonObject_MySQL_Temp->take("Password").toString(),
-		"dbcon1");
+					QScopedPointer<QJsonDocument> t_pJsDocSimpleServers{new QJsonDocument{t_pJsObj->value("SimpleServers").toArray()}};
 
-	QJsonArray *arr = new QJsonArray(QJsonObject_Temp->take("SimpleServers").toArray());
-	qDebug() << *arr;
-	sserv->InitSimpleServersFromJson(arr);
+					if (t_pJsDocSimpleServers->array().count() > 0)
+					{
+						qDebug() << "SimpleServers JsonAraay is correct";
+						QSharedPointer<QJsonArray> t_pJsArrSimpleServers{new QJsonArray{t_pJsDocSimpleServers->array()}};
+						sserv->InitSimpleServersFromJson(t_pJsArrSimpleServers);
+						quint16 HttpServerPort = t_pJsObj->value("HttpServerPort").toString().toInt();
 
-	quint16 HttpServerPort = QJsonObject_Temp->take("HttpServerPort").toString().toInt();
+						// HttpServer启动
+						HttpServer::instance().LogicControl = LogicControl; // 配置处理主函数
+						HttpServer::instance().run(QHostAddress::Any, HttpServerPort); // 设置端口
 
-	// HttpServer启动
-	HttpServer::instance().LogicControl = LogicControl; // 配置处理主函数
-	HttpServer::instance().run(QHostAddress::Any, HttpServerPort); // 设置端口
+						// 连接数据库
+						mysql->connect();
 
-	// 连接数据库
-	mysql->connect();
+						t_pJsArrSimpleServers.clear();
 
-	return a.exec();
+						return a->exec();
+					}
+					else
+					{
+						qDebug() << "SimpleServers JsonAraay is not correct";
+						system("pause");
+					}
+				}
+				else
+				{
+					qDebug() << "data.json format is not correct";
+					system("pause");
+
+				}
+			}
+			else
+			{
+				qDebug() << "data.json is not readable";
+				system("pause");
+
+			}
+
+		}
+		else
+		{
+			qDebug() << "data.json is not readable";
+			system("pause");
+
+		}
+	}
+	else
+	{
+		qDebug() << "data.json 不存在";
+		system("pause");
+
+	}
 }
 
 QJsonObject ConvertStringToJson(QString *str_Json)
@@ -91,22 +143,22 @@ void ConvertStringToJson_ptr(QString *str_Json, QJsonObject *json_Json)
 
 QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServer)
 {
-	QJsonObject *JsonObject = new QJsonObject(QJsonDocument::fromJson(*PostData).object());
-	QString *String_SQLParameters = new QString();
+	QScopedPointer<QJsonObject> t_pJsonObject{new QJsonObject{QJsonDocument::fromJson(*PostData).object()}};
+	QScopedPointer<QString> t_pstrSQLParameters{new QString{""}};
 	for (auto s : *SServer->Parameters)
 	{
-		if (!String_SQLParameters->isEmpty())
+		if (!t_pstrSQLParameters->isEmpty())
 		{
-			*String_SQLParameters += ", ";
+			*t_pstrSQLParameters += ", ";
 		}
 		else
 		{
-			*String_SQLParameters += " (";
+			*t_pstrSQLParameters += " (";
 		}
-		*String_SQLParameters += '\'' + JsonObject->take(s).toString() + '\'';
+		*t_pstrSQLParameters += '\'' + t_pJsonObject->value(s).toString() + '\'';
 	}
-	*String_SQLParameters += ')';
-	QString *String_SQL = new QString(*SServer->SQLString + *String_SQLParameters);
+	*t_pstrSQLParameters += ')';
+	QString *String_SQL = new QString(*SServer->SQLString + *t_pstrSQLParameters);
 
 	QSqlQuery *query_Sql = mysql->QueryExec(*String_SQL);
 	QJsonObject *json_Test = new QJsonObject();
@@ -120,13 +172,14 @@ QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServ
 
 	while (query_Sql->next())
 	{
-		for (int x{ 0 }; x < query_Sql->record().count(); ++x)
+		QJsonObject jsobjTemp = QJsonObject();
+		for (int x{0}; x < query_Sql->record().count(); ++x)
 		{
-			JsonArray_Temp.push_back(QJsonObject{ {query_Sql->record().fieldName(x), QJsonValue::fromVariant(query_Sql->value(x))} });
+			jsobjTemp.insert(query_Sql->record().fieldName(x), QJsonValue::fromVariant(query_Sql->value(x)));
 		}
+		JsonArray_Temp.push_back(jsobjTemp);
 	}
-
-	return QJsonDocument{ JsonArray_Temp }.toJson();
+	return QJsonDocument{JsonArray_Temp}.toJson();
 }
 
 // 处理主函数

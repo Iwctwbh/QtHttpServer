@@ -17,7 +17,7 @@ public:
 	void InitSimpleServers();
 	void InsertSimpleServer(QByteArray *, QList<QByteArray> *, QByteArray *);
 	void EraseSimpleServer();
-	void InitSimpleServersFromJson(QJsonArray *);
+	void InitSimpleServersFromJson(QSharedPointer<QJsonArray>);
 	QMap<QByteArray *, SimpleServer *> *Map_SimpleServers = new QMap<QByteArray *, SimpleServer *>();
 };
 

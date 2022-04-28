@@ -24,7 +24,7 @@ void SimpleServers::EraseSimpleServer()
 
 }
 
-void SimpleServers::InitSimpleServersFromJson(QJsonArray *arg_QjsonArray)
+void SimpleServers::InitSimpleServersFromJson(QSharedPointer<QJsonArray> arg_QjsonArray)
 {
 	this->InitSimpleServers();
 	SimpleServers *ths = this;
