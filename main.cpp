@@ -51,7 +51,8 @@ int main(int argc, char *argv[])
 			{
 				qDebug() << "data.json open success";
 				QByteArray filestream = t_pFile->readAll();
-				QScopedPointer<QJsonDocument> t_pJsDoc{new QJsonDocument{ QJsonDocument::fromJson(filestream) }};
+				QScopedPointer<QJsonParseError> t_pJsError;
+				QScopedPointer<QJsonDocument> t_pJsDoc{new QJsonDocument{ QJsonDocument::fromJson(filestream, &*t_pJsError) }};
 				if (t_pJsDoc->isObject())
 				{
 					qDebug() << "data.json format is correct";
