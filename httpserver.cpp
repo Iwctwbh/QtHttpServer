@@ -13,7 +13,6 @@ void HttpServer::run(const QHostAddress &address, const quint16 &port)
 
 void HttpServer::newConnection()
 {
-	qDebug() << "newConnection";
 	if (m_httpServer->hasPendingConnections())
 	{
 		QTcpSocket *m_socket = m_httpServer->nextPendingConnection();
@@ -28,7 +27,7 @@ void HttpServer::readyRead()
 	QScopedPointer<QTcpSocket> socket(qobject_cast<QTcpSocket *>(sender()));
 	if (socket) {
 		++count;
-		qDebug() << count;
+		qDebug() << "newConnection " << count;
 
 		// ³õÊ¼»¯Ö¸Õë
 		static QByteArray *byteArr_Request = new QByteArray();

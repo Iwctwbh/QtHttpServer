@@ -21,7 +21,7 @@ bool Mysql::connect()
 	db.setPassword(_pwd);
 	if (!db.open())
 	{
-		setLastError("数据库连接失败 ");
+		setLastError("MySQL Connect Error");
 		result = false;
 	}
 
@@ -43,7 +43,7 @@ QSqlQuery* Mysql::QueryExec(QString sql)
 	{
 		if (!query->exec(sql))
 		{
-			setLastError("执行失败 ");
+			setLastError("SQLString Query Error");
 		}
 		else
 		{
@@ -52,7 +52,7 @@ QSqlQuery* Mysql::QueryExec(QString sql)
 	}
 	else
 	{
-		setLastError("数据库未打开 ");
+		setLastError("MySQL Connection Closed");
 	}
 	return query;
 }
@@ -70,4 +70,5 @@ QString Mysql::lastError() const
 void Mysql::setLastError(const QString &lastError)
 {
 	_lastError = lastError;
+	qDebug() << "MySQL Error " << lastError;
 }

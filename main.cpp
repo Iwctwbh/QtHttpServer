@@ -27,18 +27,18 @@ SimpleServers *sserv = new SimpleServers();
 
 int main(int argc, char *argv[])
 {
-	auto *a = new QCoreApplication{argc, argv};
+	auto *a = new QCoreApplication{ argc, argv };
 
 	//QUuid id = QUuid::createUuid();
 
-	QScopedPointer<QFile> t_pFile{new QFile{ "data.json" }};
+	QScopedPointer<QFile> t_pFile{ new QFile{ "data.json" } };
 
 	if (!t_pFile->open(QIODevice::ReadOnly))
 	{
 		qDebug() << "Loading file error";
 	}
 
-	QFileInfo t_pFileInfo{"data.json"};
+	QFileInfo t_pFileInfo{ "data.json" };
 
 	if (t_pFileInfo.exists())
 	{
@@ -46,18 +46,18 @@ int main(int argc, char *argv[])
 		if (t_pFileInfo.isReadable())
 		{
 			qDebug() << "data.json is readable";
-			QScopedPointer<QFile> t_pFile{new QFile{"data.json"}};
+			QScopedPointer<QFile> t_pFile{ new QFile{"data.json"} };
 			if (t_pFile->open(QIODevice::ReadOnly))
 			{
 				qDebug() << "data.json open success";
 				QByteArray filestream = t_pFile->readAll();
-				QScopedPointer<QJsonParseError> t_pJsError;
-				QScopedPointer<QJsonDocument> t_pJsDoc{new QJsonDocument{ QJsonDocument::fromJson(filestream, &*t_pJsError) }};
-				if (t_pJsDoc->isObject())
+				QJsonParseError t_pJsParseError{QJsonParseError::NoError};
+				QScopedPointer<QJsonDocument> t_pJsDoc{ new QJsonDocument{QJsonDocument::fromJson(filestream, &t_pJsParseError)} };
+				if (t_pJsParseError.error == QJsonParseError::NoError && t_pJsDoc->isObject())
 				{
 					qDebug() << "data.json format is correct";
-					QScopedPointer<QJsonObject> t_pJsObj{new QJsonObject{t_pJsDoc->object()}};
-					QScopedPointer<QJsonObject> t_pJsMySQL{new QJsonObject(t_pJsObj->value("MySQL").toObject())};
+					QScopedPointer<QJsonObject> t_pJsObj{ new QJsonObject{t_pJsDoc->object()} };
+					QScopedPointer<QJsonObject> t_pJsMySQL{ new QJsonObject(t_pJsObj->value("MySQL").toObject()) };
 					mysql = new Mysql(
 						t_pJsMySQL->value("Host").toString(),
 						t_pJsMySQL->value("Port").toString().toInt(),
@@ -66,12 +66,12 @@ int main(int argc, char *argv[])
 						t_pJsMySQL->value("Password").toString(),
 						"dbcon1");
 
-					QScopedPointer<QJsonDocument> t_pJsDocSimpleServers{new QJsonDocument{t_pJsObj->value("SimpleServers").toArray()}};
+					QScopedPointer<QJsonDocument> t_pJsDocSimpleServers{ new QJsonDocument{t_pJsObj->value("SimpleServers").toArray()} };
 
 					if (t_pJsDocSimpleServers->array().count() > 0)
 					{
 						qDebug() << "SimpleServers JsonAraay is correct";
-						QSharedPointer<QJsonArray> t_pJsArrSimpleServers{new QJsonArray{t_pJsDocSimpleServers->array()}};
+						QSharedPointer<QJsonArray> t_pJsArrSimpleServers{ new QJsonArray{t_pJsDocSimpleServers->array()} };
 						sserv->InitSimpleServersFromJson(t_pJsArrSimpleServers);
 						quint16 HttpServerPort = t_pJsObj->value("HttpServerPort").toString().toInt();
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		qDebug() << "data.json 不存在";
+		qDebug() << "data.json is not exists";
 		system("pause");
 
 	}
@@ -144,43 +144,53 @@ void ConvertStringToJson_ptr(QString *str_Json, QJsonObject *json_Json)
 
 QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServer)
 {
-	QScopedPointer<QJsonObject> t_pJsonObject{new QJsonObject{QJsonDocument::fromJson(*PostData).object()}};
-	QScopedPointer<QString> t_pstrSQLParameters{new QString{""}};
-	for (auto s : *SServer->Parameters)
+	QJsonParseError t_pJsParseError{QJsonParseError::NoError};
+	QScopedPointer<QJsonDocument> t_pJsDoc{ new QJsonDocument{QJsonDocument::fromJson(*PostData, &t_pJsParseError)} };
+	if (t_pJsParseError.error == QJsonParseError::NoError && t_pJsDoc->isObject())
 	{
-		if (!t_pstrSQLParameters->isEmpty())
+		QScopedPointer<QJsonObject> t_pJsonObject{ new QJsonObject{t_pJsDoc->object()} };
+		QScopedPointer<QString> t_pstrSQLParameters{ new QString{""} };
+		for (auto s : *SServer->Parameters)
 		{
-			*t_pstrSQLParameters += ", ";
+			if (!t_pstrSQLParameters->isEmpty())
+			{
+				*t_pstrSQLParameters += ", ";
+			}
+			else
+			{
+				*t_pstrSQLParameters += " (";
+			}
+			*t_pstrSQLParameters += '\'' + t_pJsonObject->value(s).toString() + '\'';
 		}
-		else
+		*t_pstrSQLParameters += ')';
+		QString *String_SQL = new QString(*SServer->SQLString + *t_pstrSQLParameters);
+
+		QSqlQuery *query_Sql = mysql->QueryExec(*String_SQL);
+		QJsonObject *json_Test = new QJsonObject();
+		QString *str_Json = new QString();
+
+		*json_Test = {};
+
+		QJsonArray JsonArray_Temp;
+
+		query_Sql = mysql->QueryExec(*String_SQL);
+
+		while (query_Sql->next())
 		{
-			*t_pstrSQLParameters += " (";
+			QJsonObject jsobjTemp = QJsonObject();
+			for (int x{ 0 }; x < query_Sql->record().count(); ++x)
+			{
+				jsobjTemp.insert(query_Sql->record().fieldName(x), QJsonValue::fromVariant(query_Sql->value(x)));
+			}
+			JsonArray_Temp.push_back(jsobjTemp);
 		}
-		*t_pstrSQLParameters += '\'' + t_pJsonObject->value(s).toString() + '\'';
+		return QJsonDocument{ JsonArray_Temp }.toJson();
 	}
-	*t_pstrSQLParameters += ')';
-	QString *String_SQL = new QString(*SServer->SQLString + *t_pstrSQLParameters);
-
-	QSqlQuery *query_Sql = mysql->QueryExec(*String_SQL);
-	QJsonObject *json_Test = new QJsonObject();
-	QString *str_Json = new QString();
-
-	*json_Test = {};
-
-	QJsonArray JsonArray_Temp;
-
-	query_Sql = mysql->QueryExec(*String_SQL);
-
-	while (query_Sql->next())
+	else
 	{
-		QJsonObject jsobjTemp = QJsonObject();
-		for (int x{0}; x < query_Sql->record().count(); ++x)
-		{
-			jsobjTemp.insert(query_Sql->record().fieldName(x), QJsonValue::fromVariant(query_Sql->value(x)));
-		}
-		JsonArray_Temp.push_back(jsobjTemp);
+		return QJsonDocument::fromJson("{\"Error\":\"Error\"}").toJson();
+		qDebug() << "PostData format is not correct";
 	}
-	return QJsonDocument{JsonArray_Temp}.toJson();
 }
 
 // 处理主函数
@@ -242,6 +252,4 @@ void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp,
 	*byteArr_ResponseHttp += "Vary: Accept-Encoding, Origin\r\n";
 	*byteArr_ResponseHttp += "Keep-Alive: timeout=2, max=100\r\n";
 	*byteArr_ResponseHttp += QString("Content-Length: %1\r\n\r\n").arg(QString::number((*byteArr_ResponseData).size())).toLocal8Bit();
-
-	qDebug() << "\r\n" << "-------------------end------------------" << "\r\n";
 }
