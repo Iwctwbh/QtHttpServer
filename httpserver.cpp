@@ -27,7 +27,7 @@ void HttpServer::readyRead()
 	QScopedPointer<QTcpSocket> socket(qobject_cast<QTcpSocket *>(sender()));
 	if (socket) {
 		++count;
-		qDebug() << "newConnection " << count;
+		//qDebug() << "newConnection " << count;
 
 		// 初始化指针
 		static QByteArray *byteArr_Request = new QByteArray();
@@ -36,7 +36,7 @@ void HttpServer::readyRead()
 
 		*byteArr_Request = socket->readAll().trimmed();
 		byteArr_ResponseHttp->clear();
-		byteArr_ResponseHttp->clear();
+		byteArr_ResponseData->clear();
 
 		// 中间函数，亦处理主函数 为函数指针，需指向所需函数
 		LogicControl(byteArr_Request, byteArr_ResponseHttp, byteArr_ResponseData);

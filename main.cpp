@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 			{
 				qDebug() << "data.json open success";
 				QByteArray filestream = t_pFile->readAll();
-				QJsonParseError t_pJsParseError{QJsonParseError::NoError};
+				QJsonParseError t_pJsParseError{ QJsonParseError::NoError };
 				QScopedPointer<QJsonDocument> t_pJsDoc{ new QJsonDocument{QJsonDocument::fromJson(filestream, &t_pJsParseError)} };
 				if (t_pJsParseError.error == QJsonParseError::NoError && t_pJsDoc->isObject())
 				{
@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
 						mysql->connect();
 
 						t_pJsArrSimpleServers.clear();
+						t_pJsArrSimpleServers = nullptr;
 
 						return a->exec();
 					}
@@ -144,7 +145,7 @@ void ConvertStringToJson_ptr(QString *str_Json, QJsonObject *json_Json)
 
 QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServer)
 {
-	QJsonParseError t_pJsParseError{QJsonParseError::NoError};
+	QJsonParseError t_pJsParseError{ QJsonParseError::NoError };
 	QScopedPointer<QJsonDocument> t_pJsDoc{ new QJsonDocument{QJsonDocument::fromJson(*PostData, &t_pJsParseError)} };
 	if (t_pJsParseError.error == QJsonParseError::NoError && t_pJsDoc->isObject())
 	{
@@ -163,17 +164,17 @@ QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServ
 			*t_pstrSQLParameters += '\'' + t_pJsonObject->value(s).toString() + '\'';
 		}
 		*t_pstrSQLParameters += ')';
-		QString *String_SQL = new QString(*SServer->SQLString + *t_pstrSQLParameters);
+		QScopedPointer<QString> String_SQL{ new QString(*SServer->SQLString + *t_pstrSQLParameters) };
 
-		QSqlQuery *query_Sql = mysql->QueryExec(*String_SQL);
-		QJsonObject *json_Test = new QJsonObject();
-		QString *str_Json = new QString();
+		QScopedPointer<QSqlQuery> query_Sql{ new QSqlQuery{*mysql->QueryExec(*String_SQL)} };
+		QScopedPointer<QJsonObject> json_Test{ new QJsonObject() };
+		QScopedPointer<QString> str_Json{ new QString() };
 
 		*json_Test = {};
 
 		QJsonArray JsonArray_Temp;
 
-		query_Sql = mysql->QueryExec(*String_SQL);
+		//query_Sql = mysql->QueryExec(*String_SQL);
 
 		while (query_Sql->next())
 		{
@@ -184,7 +185,9 @@ QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServ
 			}
 			JsonArray_Temp.push_back(jsobjTemp);
 		}
-		return QJsonDocument{ JsonArray_Temp }.toJson();
+		QScopedPointer<QJsonObject> t_pJsObj{ new QJsonObject };
+		t_pJsObj->insert("data", JsonArray_Temp);
+		return QJsonDocument{ *t_pJsObj }.toJson();
 	}
 	else
 	{
@@ -196,27 +199,18 @@ QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServ
 // 处理主函数
 void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp, QByteArray *byteArr_ResponseData)
 {
-	static RequestParse *requestParsing = new RequestParse();
+	QScopedPointer<RequestParse> requestParsing{ new RequestParse };
 
 	requestParsing->SetRequest(*byteArr_Request);
 
 	//auto iter = map_Function->find(*requestParsing->GetParameter());
-	QByteArray Parameter = *requestParsing->GetParameter();
+	QScopedPointer<QByteArray> Parameter{ new QByteArray{*requestParsing->GetParameter()} };
 	bool flag = false;
-	SimpleServers::SimpleServer *simpleserver = new SimpleServers::SimpleServer();
-	/*foreach(SimpleServer * s, map_Function)
-	{
-		if (Parameter.compare(*s->Control))
-		{
-			flag = true;
-			simpleserver = s;
-			break;
-		}
-	}*/
+	static SimpleServers::SimpleServer *simpleserver = new SimpleServers::SimpleServer;
 
 	for (auto iter_Temp = sserv->Map_SimpleServers->begin(); iter_Temp != sserv->Map_SimpleServers->end(); ++iter_Temp)
 	{
-		if (!Parameter.compare(*iter_Temp.key()))
+		if (!Parameter->compare(*iter_Temp.key()))
 		{
 			flag = true;
 			simpleserver = iter_Temp.value();
@@ -227,11 +221,11 @@ void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp,
 	if (flag)
 	{
 		*byteArr_ResponseData = TestFunction(requestParsing->GetPostData(), simpleserver);
-		auto map_Cookies = requestParsing->GetCookies();
-		for (auto iter_Temp = map_Cookies->begin(); iter_Temp != map_Cookies->end(); ++iter_Temp)
+		//auto map_Cookies = requestParsing->GetCookies();
+		/*for (auto iter_Temp = map_Cookies->begin(); iter_Temp != map_Cookies->end(); ++iter_Temp)
 		{
 			qDebug() << iter_Temp.key() << ": " << iter_Temp.value() << "\r\n";
-		}
+		}*/
 		*byteArr_ResponseHttp += "HTTP/1.1 200 OK\r\n";
 	}
 	else
