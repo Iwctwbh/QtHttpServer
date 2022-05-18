@@ -228,6 +228,11 @@ void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp,
 		}*/
 		*byteArr_ResponseHttp += "HTTP/1.1 200 OK\r\n";
 	}
+	else if (!Parameter->compare("/vueWebServer"))
+	{
+		*byteArr_ResponseData = "{\"message\" : \"success\"}";
+		*byteArr_ResponseHttp += "HTTP/1.1 200 OK\r\n";
+	}
 	else
 	{
 		*byteArr_ResponseHttp += "HTTP/1.1 404 NotFound\r\n";
@@ -237,7 +242,8 @@ void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp,
 	//*byteArr_ResponseHttp += "Content-Type: text/html;charset=utf-8\r\n";
 	*byteArr_ResponseHttp += "Content-Type: application/json; text/plain, charset=utf-8\r\n";
 	*byteArr_ResponseHttp += "Connection: keep-alive\r\n";
-	*byteArr_ResponseHttp += "Access-Control-Allow-Origin: http://10.11.12.6:8080\r\n";
+	//*byteArr_ResponseHttp += "Access-Control-Allow-Origin: http://10.11.12.6:8080\r\n";
+	*byteArr_ResponseHttp += "Access-Control-Allow-Origin: *\r\n";
 	*byteArr_ResponseHttp += "Access-Control-Allow-Methods: POST, OPTIONS\r\n";
 	*byteArr_ResponseHttp += "Access-Control-Allow-Header: Authorization, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, X-Requested-By, If-Modified-Since, X-File-Name, X-File-Type, Cache-Control, Origin\r\n";
 	*byteArr_ResponseHttp += "Access-Control-Allow-Credentials: true\r\n";
