@@ -242,12 +242,13 @@ void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp,
 	//*byteArr_ResponseHttp += "Content-Type: text/html;charset=utf-8\r\n";
 	*byteArr_ResponseHttp += "Content-Type: application/json; text/plain, charset=utf-8\r\n";
 	*byteArr_ResponseHttp += "Connection: keep-alive\r\n";
-	//*byteArr_ResponseHttp += "Access-Control-Allow-Origin: http://10.11.12.6:8080\r\n";
+	//*byteArr_ResponseHttp += "Access-Control-Allow-Origin: http://127.0.0.1:8080\r\n";
 	*byteArr_ResponseHttp += "Access-Control-Allow-Origin: *\r\n";
-	*byteArr_ResponseHttp += "Access-Control-Allow-Methods: POST, OPTIONS\r\n";
-	*byteArr_ResponseHttp += "Access-Control-Allow-Header: Authorization, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, X-Requested-By, If-Modified-Since, X-File-Name, X-File-Type, Cache-Control, Origin\r\n";
+	//*byteArr_ResponseHttp += "Access-Control-Allow-Methods: POST, OPTIONS\r\n";
+	*byteArr_ResponseHttp += "Access-Control-Allow-Headers: Access-Control-Request-Headers, Authorization, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, X-Requested-By, If-Modified-Since, X-File-Name, X-File-Type, Cache-Control, Origin, Access-Token\r\n";
 	*byteArr_ResponseHttp += "Access-Control-Allow-Credentials: true\r\n";
 	*byteArr_ResponseHttp += "access-control-expose-headers: Authorization\r\n";
+	*byteArr_ResponseHttp += "access-control-expose-headers: *\r\n";
 	*byteArr_ResponseHttp += "Access-Control-Max-Age: 60\r\n";
 	*byteArr_ResponseHttp += "Vary: Accept-Encoding, Origin\r\n";
 	*byteArr_ResponseHttp += "Keep-Alive: timeout=2, max=100\r\n";
