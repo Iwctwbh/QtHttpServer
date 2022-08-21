@@ -18,6 +18,11 @@
       "Control": "/Login",
       "Parameters": "UserName, Password",
       "SQLString": "call test.sp_TestLogin"
+    },
+    {
+      "Control": "/api/user/login",
+      "Parameters": "eamil, password",
+      "SQLString": "call test.sp_TestLogin"
     }
   ]
 }

@@ -36,19 +36,22 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="httpserver.h">
-      <Filter>Source Files</Filter>
-    </QtMoc>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="mysql.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RequestParse.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SimpleServers.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="httpserver.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

@@ -1,129 +1,96 @@
 #include <QtCore/QCoreApplication>
 #include <QtSql>
 
-#include<algorithm>
-
-#include "httpserver.h"
 #include "mysql.h"
 #include "RequestParse.h"
 #include "SimpleServers.h"
+#include "drogon/drogon.h"
+#include "crow.h"
 
-void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp, QByteArray *byteArr_ResponseData);
-
-//QMap<QByteArray, QByteArray(*)(QByteArray *)> *map_Function = new QMap<QByteArray, QByteArray(*)(QByteArray *)>();
+void LogicControl(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData);
 
 typedef struct
 {
-	QList<QByteArray> *Parameter;
-	QByteArray *SQLString;
+	QList<QByteArray>* list_bytearray_parameters;
+	QByteArray* bytearray_sql;
 
 } SimpleServer;
 
-//QMap<SimpleServer *, QByteArray(*)(QByteArray *)> *map_Function = new QMap<SimpleServer *, QByteArray(*)(QByteArray *)>();
+Mysql* mysql;
 
-Mysql *mysql;
-
-SimpleServers *sserv = new SimpleServers();
-
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-	auto *a = new QCoreApplication{ argc, argv };
-
-	//QUuid id = QUuid::createUuid();
-
-	QScopedPointer<QFile> t_pFile{ new QFile{ "data.json" } };
-
-	if (!t_pFile->open(QIODevice::ReadOnly))
+	const QCoreApplication* a = new QCoreApplication{ argc, argv };
+	if (QFile file_simple_server{ "SimpleServer.json" }; file_simple_server.exists())
 	{
-		qDebug() << "Loading file error";
-	}
-
-	QFileInfo t_pFileInfo{ "data.json" };
-
-	if (t_pFileInfo.exists())
-	{
-		qDebug() << "data.json exists";
-		if (t_pFileInfo.isReadable())
+		qDebug() << "SimpleServer.json exists";
+		qDebug() << "SimpleServer.json is readable";
+		if (file_simple_server.open(QIODevice::ReadOnly))
 		{
-			qDebug() << "data.json is readable";
-			QScopedPointer<QFile> t_pFile{ new QFile{"data.json"} };
-			if (t_pFile->open(QIODevice::ReadOnly))
+			qDebug() << "SimpleServer.json open success";
+			const QByteArray bytearray_simple_server = file_simple_server.readAll();
+			QJsonParseError error_json_parse{ QJsonParseError::NoError };
+			if (const QJsonDocument json_document_simple_server_file{ QJsonDocument::fromJson(bytearray_simple_server, &error_json_parse) }; error_json_parse.error == QJsonParseError::NoError && json_document_simple_server_file.isObject())
 			{
-				qDebug() << "data.json open success";
-				QByteArray filestream = t_pFile->readAll();
-				QJsonParseError t_pJsParseError{ QJsonParseError::NoError };
-				QScopedPointer<QJsonDocument> t_pJsDoc{ new QJsonDocument{QJsonDocument::fromJson(filestream, &t_pJsParseError)} };
-				if (t_pJsParseError.error == QJsonParseError::NoError && t_pJsDoc->isObject())
+				qDebug() << "SimpleServer.json format is correct";
+				const QJsonObject json_object_simple_server{ json_document_simple_server_file.object() };
+				const QJsonObject json_object_mysql{ json_object_simple_server.value("MySQL").toObject() };
+				mysql = new Mysql(json_object_mysql.value("Host").toString(),
+								  json_object_mysql.value("Port").toString().toInt(),
+								  json_object_mysql.value("DataBase").toString(),
+								  json_object_mysql.value("UserName").toString(),
+								  json_object_mysql.value("Password").toString(),
+								  "db_connect");
+
+				if (const QJsonDocument json_document_simple_server{ QJsonDocument{json_object_simple_server.value("SimpleServers").toArray()} }; json_document_simple_server.array().count() > 0)
 				{
-					qDebug() << "data.json format is correct";
-					QScopedPointer<QJsonObject> t_pJsObj{ new QJsonObject{t_pJsDoc->object()} };
-					QScopedPointer<QJsonObject> t_pJsMySQL{ new QJsonObject(t_pJsObj->value("MySQL").toObject()) };
-					mysql = new Mysql(
-						t_pJsMySQL->value("Host").toString(),
-						t_pJsMySQL->value("Port").toString().toInt(),
-						t_pJsMySQL->value("DataBase").toString(),
-						t_pJsMySQL->value("UserName").toString(),
-						t_pJsMySQL->value("Password").toString(),
-						"dbcon1");
+					qDebug() << "SimpleServers JsonAraay is correct";
+					QJsonArray json_array_simple_server{ QJsonArray{json_document_simple_server.array()} };
+					const quint16 int_http_server_port = json_object_simple_server.value("HttpServerPort").toString().toInt();
 
-					QScopedPointer<QJsonDocument> t_pJsDocSimpleServers{ new QJsonDocument{t_pJsObj->value("SimpleServers").toArray()} };
+					// 连接数据库
+					mysql->connect();
 
-					if (t_pJsDocSimpleServers->array().count() > 0)
+					// Crow
+					crow::SimpleApp simple_app_crow{};
+					CROW_ROUTE(simple_app_crow, "/").methods(crow::HTTPMethod::Get)([](const crow::request& str_request)
 					{
-						qDebug() << "SimpleServers JsonAraay is correct";
-						QSharedPointer<QJsonArray> t_pJsArrSimpleServers{ new QJsonArray{t_pJsDocSimpleServers->array()} };
-						sserv->InitSimpleServersFromJson(t_pJsArrSimpleServers);
-						quint16 HttpServerPort = t_pJsObj->value("HttpServerPort").toString().toInt();
+						return crow::response(200);
+					});
 
-						// HttpServer启动
-						HttpServer::instance().LogicControl = LogicControl; // 配置处理主函数
-						HttpServer::instance().run(QHostAddress::Any, HttpServerPort); // 设置端口
+					simple_app_crow.bindaddr("10.11.12.6").port(int_http_server_port).multithreaded().run_async();
 
-						// 连接数据库
-						mysql->connect();
-
-						t_pJsArrSimpleServers.clear();
-						t_pJsArrSimpleServers = nullptr;
-
-						return a->exec();
-					}
-					else
-					{
-						qDebug() << "SimpleServers JsonAraay is not correct";
-						system("pause");
-					}
+					return a->exec();
 				}
 				else
 				{
-					qDebug() << "data.json format is not correct";
+					qDebug() << "SimpleServers JsonAraay is not correct";
 					system("pause");
-
 				}
 			}
 			else
 			{
-				qDebug() << "data.json is not readable";
+				qDebug() << "SimpleServer.json format is not correct";
 				system("pause");
 
 			}
-
 		}
 		else
 		{
-			qDebug() << "data.json is not readable";
+			qDebug() << "SimpleServer.json is not readable";
 			system("pause");
 
 		}
 	}
 	else
 	{
-		qDebug() << "data.json is not exists";
+		qDebug() << "SimpleServer.json is not exists";
 		system("pause");
 
 	}
 }
 
-QJsonObject ConvertStringToJson(QString *str_Json)
+QJsonObject ConvertStringToJson(QString* str_Json)
 {
 	QJsonObject json_Json;
 	QScopedPointer<QList<QString>> list_Request_str(new QList<QString>(str_Json->split('&')));
@@ -134,7 +101,7 @@ QJsonObject ConvertStringToJson(QString *str_Json)
 	return json_Json;
 }
 
-void ConvertStringToJson_ptr(QString *str_Json, QJsonObject *json_Json)
+void ConvertStringToJson_ptr(QString* str_Json, QJsonObject* json_Json)
 {
 	QScopedPointer<QList<QString>> list_Request_str(new QList<QString>(str_Json->split('&')));
 	foreach(QString i, *list_Request_str)
@@ -143,7 +110,7 @@ void ConvertStringToJson_ptr(QString *str_Json, QJsonObject *json_Json)
 	}
 }
 
-QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServer)
+QByteArray TestFunction(QByteArray* PostData, SimpleServers::SimpleServer* SServer)
 {
 	QJsonParseError t_pJsParseError{ QJsonParseError::NoError };
 	QScopedPointer<QJsonDocument> t_pJsDoc{ new QJsonDocument{QJsonDocument::fromJson(*PostData, &t_pJsParseError)} };
@@ -197,7 +164,7 @@ QByteArray TestFunction(QByteArray *PostData, SimpleServers::SimpleServer *SServ
 }
 
 // 处理主函数
-void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp, QByteArray *byteArr_ResponseData)
+void LogicControl(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData)
 {
 	QScopedPointer<RequestParse> requestParsing{ new RequestParse };
 
@@ -206,27 +173,11 @@ void LogicControl(QByteArray *byteArr_Request, QByteArray *byteArr_ResponseHttp,
 	//auto iter = map_Function->find(*requestParsing->GetParameter());
 	QScopedPointer<QByteArray> Parameter{ new QByteArray{*requestParsing->GetParameter()} };
 	bool flag = false;
-	static SimpleServers::SimpleServer *simpleserver = new SimpleServers::SimpleServer;
-
-	for (auto iter_Temp = sserv->Map_SimpleServers->begin(); iter_Temp != sserv->Map_SimpleServers->end(); ++iter_Temp)
-	{
-		if (!Parameter->compare(*iter_Temp.key()))
-		{
-			flag = true;
-			simpleserver = iter_Temp.value();
-			break;
-		}
-	}
+	static SimpleServers::SimpleServer* simpleserver = new SimpleServers::SimpleServer;
 
 	if (flag)
 	{
 		*byteArr_ResponseData = TestFunction(requestParsing->GetPostData(), simpleserver);
-		//auto map_Cookies = requestParsing->GetCookies();
-		/*for (auto iter_Temp = map_Cookies->begin(); iter_Temp != map_Cookies->end(); ++iter_Temp)
-		{
-			qDebug() << iter_Temp.key() << ": " << iter_Temp.value() << "\r\n";
-		}*/
-		*byteArr_ResponseHttp += "HTTP/1.1 200 OK\r\n";
 	}
 	else if (!Parameter->compare("/vueWebServer"))
 	{
