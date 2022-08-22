@@ -39,7 +39,7 @@ void HttpServer::readyRead()
 		byteArr_ResponseData->clear();
 
 		// 中间函数，亦处理主函数 为函数指针，需指向所需函数
-		LogicControl(byteArr_Request, byteArr_ResponseHttp, byteArr_ResponseData);
+		Logiccontroller(byteArr_Request, byteArr_ResponseHttp, byteArr_ResponseData);
 		
 		// 输出响应
 		socket->write(*byteArr_ResponseHttp);

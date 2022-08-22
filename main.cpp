@@ -7,14 +7,7 @@
 #include "drogon/drogon.h"
 #include "crow.h"
 
-void LogicControl(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData);
-
-typedef struct
-{
-	QList<QByteArray>* list_bytearray_parameters;
-	QByteArray* bytearray_sql;
-
-} SimpleServer;
+void Logiccontroller(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData);
 
 Mysql* mysql;
 
@@ -48,14 +41,29 @@ int main(int argc, char* argv[])
 					QJsonArray json_array_simple_server{ QJsonArray{json_document_simple_server.array()} };
 					const quint16 int_http_server_port = json_object_simple_server.value("HttpServerPort").toString().toInt();
 
+					// Init SimpleServers
+					SimpleServers simple_servers{};
+					simple_servers.InitSimpleServersFromJson(json_array_simple_server);
+
 					// 连接数据库
 					mysql->connect();
 
-					// Crow
+					// Init Crow
 					crow::SimpleApp simple_app_crow{};
-					CROW_ROUTE(simple_app_crow, "/").methods(crow::HTTPMethod::Get)([](const crow::request& str_request)
+
+					std::ranges::for_each(simple_servers.map_simple_servers_.keys(), [&simple_app_crow](QByteArray& temp_bytearray_key)
 					{
-						return crow::response(200);
+						char foo[] = "/foo";
+						char abc[100];
+						int len_array{ static_cast<int>(temp_bytearray_key.size()) };
+						int len_buf{ sizeof(abc) };
+						int len = qMin(len_array, len_buf);
+						memcpy(abc, temp_bytearray_key, len);
+						crow::black_magic::const_str a{ foo };
+						CROW_ROUTE(simple_app_crow, abc).methods(crow::HTTPMethod::Post)([](const crow::request& request_request)
+						{
+							return crow::response(200);
+						});
 					});
 
 					simple_app_crow.bindaddr("10.11.12.6").port(int_http_server_port).multithreaded().run_async();
@@ -93,21 +101,12 @@ int main(int argc, char* argv[])
 QJsonObject ConvertStringToJson(QString* str_Json)
 {
 	QJsonObject json_Json;
-	QScopedPointer<QList<QString>> list_Request_str(new QList<QString>(str_Json->split('&')));
-	foreach(QString i, *list_Request_str)
+	QList<QString> list_Request_str(str_Json->split('&'));
+	foreach(QString i, list_Request_str)
 	{
 		json_Json.insert(QString(QUrl::fromPercentEncoding(i.split('=').first().toLocal8Bit())), QString(QUrl::fromPercentEncoding(i.split('=').last().toLocal8Bit())));
 	}
 	return json_Json;
-}
-
-void ConvertStringToJson_ptr(QString* str_Json, QJsonObject* json_Json)
-{
-	QScopedPointer<QList<QString>> list_Request_str(new QList<QString>(str_Json->split('&')));
-	foreach(QString i, *list_Request_str)
-	{
-		json_Json->insert(QString(QUrl::fromPercentEncoding(i.split('=').first().toLocal8Bit())), QString(QUrl::fromPercentEncoding(i.split('=').last().toLocal8Bit())));
-	}
 }
 
 QByteArray TestFunction(QByteArray* PostData, SimpleServers::SimpleServer* SServer)
@@ -118,7 +117,7 @@ QByteArray TestFunction(QByteArray* PostData, SimpleServers::SimpleServer* SServ
 	{
 		QScopedPointer<QJsonObject> t_pJsonObject{ new QJsonObject{t_pJsDoc->object()} };
 		QScopedPointer<QString> t_pstrSQLParameters{ new QString{""} };
-		for (auto s : *SServer->Parameters)
+		for (auto s : SServer->list_parameters)
 		{
 			if (!t_pstrSQLParameters->isEmpty())
 			{
@@ -131,7 +130,7 @@ QByteArray TestFunction(QByteArray* PostData, SimpleServers::SimpleServer* SServ
 			*t_pstrSQLParameters += '\'' + t_pJsonObject->value(s).toString() + '\'';
 		}
 		*t_pstrSQLParameters += ')';
-		QScopedPointer<QString> String_SQL{ new QString(*SServer->SQLString + *t_pstrSQLParameters) };
+		QScopedPointer<QString> String_SQL{ new QString(*SServer->bytearray_sql + *t_pstrSQLParameters) };
 
 		QScopedPointer<QSqlQuery> query_Sql{ new QSqlQuery{*mysql->QueryExec(*String_SQL)} };
 		QScopedPointer<QJsonObject> json_Test{ new QJsonObject() };
@@ -164,7 +163,7 @@ QByteArray TestFunction(QByteArray* PostData, SimpleServers::SimpleServer* SServ
 }
 
 // 处理主函数
-void LogicControl(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData)
+void Logiccontroller(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData)
 {
 	QScopedPointer<RequestParse> requestParsing{ new RequestParse };
 
@@ -193,14 +192,14 @@ void LogicControl(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp,
 	//*byteArr_ResponseHttp += "Content-Type: text/html;charset=utf-8\r\n";
 	*byteArr_ResponseHttp += "Content-Type: application/json; text/plain, charset=utf-8\r\n";
 	*byteArr_ResponseHttp += "Connection: keep-alive\r\n";
-	//*byteArr_ResponseHttp += "Access-Control-Allow-Origin: http://127.0.0.1:8080\r\n";
-	*byteArr_ResponseHttp += "Access-Control-Allow-Origin: *\r\n";
-	//*byteArr_ResponseHttp += "Access-Control-Allow-Methods: POST, OPTIONS\r\n";
-	*byteArr_ResponseHttp += "Access-Control-Allow-Headers: Access-Control-Request-Headers, Authorization, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, X-Requested-By, If-Modified-Since, X-File-Name, X-File-Type, Cache-Control, Origin, Access-Token\r\n";
-	*byteArr_ResponseHttp += "Access-Control-Allow-Credentials: true\r\n";
-	*byteArr_ResponseHttp += "access-control-expose-headers: Authorization\r\n";
-	*byteArr_ResponseHttp += "access-control-expose-headers: *\r\n";
-	*byteArr_ResponseHttp += "Access-Control-Max-Age: 60\r\n";
+	//*byteArr_ResponseHttp += "Access-controller-Allow-Origin: http://127.0.0.1:8080\r\n";
+	*byteArr_ResponseHttp += "Access-controller-Allow-Origin: *\r\n";
+	//*byteArr_ResponseHttp += "Access-controller-Allow-Methods: POST, OPTIONS\r\n";
+	*byteArr_ResponseHttp += "Access-controller-Allow-Headers: Access-controller-Request-Headers, Authorization, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, X-Requested-By, If-Modified-Since, X-File-Name, X-File-Type, Cache-controller, Origin, Access-Token\r\n";
+	*byteArr_ResponseHttp += "Access-controller-Allow-Credentials: true\r\n";
+	*byteArr_ResponseHttp += "access-controller-expose-headers: Authorization\r\n";
+	*byteArr_ResponseHttp += "access-controller-expose-headers: *\r\n";
+	*byteArr_ResponseHttp += "Access-controller-Max-Age: 60\r\n";
 	*byteArr_ResponseHttp += "Vary: Accept-Encoding, Origin\r\n";
 	*byteArr_ResponseHttp += "Keep-Alive: timeout=2, max=100\r\n";
 	*byteArr_ResponseHttp += QString("Content-Length: %1\r\n\r\n").arg(QString::number((*byteArr_ResponseData).size())).toLocal8Bit();

@@ -11,7 +11,7 @@ class HttpServer : public QObject
 public:
 	static HttpServer &instance();
 	QMap<QString, QString(*)(QString*)> *map_Parameter = new QMap<QString, QString(*)(QString*)>();
-	void (*LogicControl)(QByteArray*, QByteArray*, QByteArray*);
+	void (*Logiccontroller)(QByteArray*, QByteArray*, QByteArray*);
 	void run(const QHostAddress &address = QHostAddress::Any, const quint16 &port = 80);
 
 signals:

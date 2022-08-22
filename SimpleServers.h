@@ -2,23 +2,23 @@
 #ifndef SIMPLESERVERS_H
 #define SIMPLESERVERS_H
 
-#include <QObject>
 #include <QtNetwork>
 class SimpleServers
 {
 public:
+	SimpleServers();
 	typedef struct
 	{
-		//QByteArray *Control;
-		QList<QByteArray> *Parameters;
-		QByteArray *SQLString;
+		//QByteArray *controller;
+		QList<QByteArray> list_parameters;
+		QByteArray bytearray_sql;
 
 	} SimpleServer;
-	void InitSimpleServers();
-	void InsertSimpleServer(QByteArray *, QList<QByteArray> *, QByteArray *);
-	void EraseSimpleServer();
-	void InitSimpleServersFromJson(QSharedPointer<QJsonArray>);
-	QMap<QByteArray *, SimpleServer *> *Map_SimpleServers = new QMap<QByteArray *, SimpleServer *>();
+	auto InitSimpleServers() -> void;
+	auto InsertSimpleServer(const QByteArray&, const QList<QByteArray>&, const QByteArray&) -> void;
+	static auto EraseSimpleServer() -> void;
+	auto InitSimpleServersFromJson(const QJsonArray&) -> void;
+	QMap<QByteArray, SimpleServer> map_simple_servers_{};
 };
 
 #endif // SIMPLESERVERS_H

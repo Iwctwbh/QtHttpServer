@@ -1,47 +1,49 @@
 #include "SimpleServers.h"
 
-void SimpleServers::InitSimpleServers()
+SimpleServers::SimpleServers()
+= default;
+
+auto SimpleServers::InitSimpleServers() -> void
 {
-	this->Map_SimpleServers->clear();
+	this->map_simple_servers_.clear();
 }
 
-void SimpleServers::InsertSimpleServer(QByteArray *arg_QByteArray_Control_Temp, QList<QByteArray> *arg_QList_Parameters, QByteArray *arg_QByteArray_SQLString_Temp)
+auto SimpleServers::InsertSimpleServer(const QByteArray& arg_bytearray_controller, const QList<QByteArray>& arg_list_parameters, const QByteArray& arg_bytearray_sql) -> void
 {
-	//QByteArray QByteArray_MD5_Temp = QCryptographicHash::hash(*QByteArray_Control_Temp, QCryptographicHash::Md5).toHex();
-	SimpleServers::SimpleServer *SimpleServer_Temp = new SimpleServers::SimpleServer
+	//QByteArray QByteArray_MD5_Temp = QCryptographicHash::hash(*QByteArray_controller_Temp, QCryptographicHash::Md5).toHex();
+	const SimpleServers::SimpleServer simple_servers{ arg_list_parameters, arg_bytearray_sql };
+	if (!this->map_simple_servers_.contains(arg_bytearray_controller))
 	{
-		arg_QList_Parameters,
-		arg_QByteArray_SQLString_Temp
-	};
-	if (this->Map_SimpleServers->find(arg_QByteArray_Control_Temp) == this->Map_SimpleServers->end())
+		this->map_simple_servers_.insert(arg_bytearray_controller, simple_servers);
+	}
+	else
 	{
-		this->Map_SimpleServers->insert(arg_QByteArray_Control_Temp, SimpleServer_Temp);
+		qDebug() << L"不能有两个相同的控制器 Can't add two identical controllers";
 	}
 }
 
-void SimpleServers::EraseSimpleServer()
+auto SimpleServers::EraseSimpleServer() -> void
 {
 
 }
 
-void SimpleServers::InitSimpleServersFromJson(QSharedPointer<QJsonArray> arg_QjsonArray)
+auto SimpleServers::InitSimpleServersFromJson(const QJsonArray& arg_json_array) -> void
 {
 	this->InitSimpleServers();
-	SimpleServers *ths = this;
 
-	std::for_each(arg_QjsonArray->begin(), arg_QjsonArray->end(), [ths](QJsonValue obj)
+	std::ranges::for_each(arg_json_array, [this](const QJsonValue& temp_json_value)
+	{
+		const QByteArray bytearray_controller{ temp_json_value.toObject().take("controller").toString().toLocal8Bit() };
+
+		QList<QByteArray> list_parameters{};
+
+		Q_FOREACH(const QString & temp_string, temp_json_value.toObject().take("Parameters").toString().split(','))
 		{
-			QByteArray *QByteArray_Control_Temp = new QByteArray{ obj.toObject().take("Control").toString().toLocal8Bit() };
+			list_parameters.emplace_back(temp_string.trimmed().toLocal8Bit());
+		}
 
-			QList<QByteArray> *QList_QString_Parameters = new QList<QByteArray>();
+		const QByteArray bytearray_sql{ temp_json_value.toObject().take("SQLString").toString().toLocal8Bit() };
 
-			Q_FOREACH(auto o, obj.toObject().take("Parameters").toString().split(','))
-			{
-				QList_QString_Parameters->emplace_back(o.trimmed().toLocal8Bit());
-			}
-
-			QByteArray *QByteArray_SQLString_Temp = new QByteArray{ obj.toObject().take("SQLString").toString().toLocal8Bit() };
-
-			ths->InsertSimpleServer(QByteArray_Control_Temp, QList_QString_Parameters, QByteArray_SQLString_Temp);
-		});
+		this->InsertSimpleServer(bytearray_controller, list_parameters, bytearray_sql);
+	});
 }
