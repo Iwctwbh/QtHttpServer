@@ -8,10 +8,10 @@ auto SimpleServers::InitSimpleServers() -> void
 	this->map_simple_servers_.clear();
 }
 
-auto SimpleServers::InsertSimpleServer(const QByteArray& arg_bytearray_controller, const QList<QByteArray>& arg_list_parameters, const QByteArray& arg_bytearray_sql) -> void
+auto SimpleServers::InsertSimpleServer(const QByteArray& arg_bytearray_controller, const QByteArray& arg_bytearray_method, const QList<QByteArray>& arg_list_parameters, const QByteArray& arg_bytearray_sql) -> void
 {
 	//QByteArray QByteArray_MD5_Temp = QCryptographicHash::hash(*QByteArray_controller_Temp, QCryptographicHash::Md5).toHex();
-	const SimpleServers::SimpleServer simple_servers{ arg_list_parameters, arg_bytearray_sql };
+	const SimpleServers::SimpleServer simple_servers{ arg_bytearray_method, arg_list_parameters, arg_bytearray_sql };
 	if (!this->map_simple_servers_.contains(arg_bytearray_controller))
 	{
 		this->map_simple_servers_.insert(arg_bytearray_controller, simple_servers);
@@ -33,17 +33,26 @@ auto SimpleServers::InitSimpleServersFromJson(const QJsonArray& arg_json_array) 
 
 	std::ranges::for_each(arg_json_array, [this](const QJsonValue& temp_json_value)
 	{
-		const QByteArray bytearray_controller{ temp_json_value.toObject().take("controller").toString().toLocal8Bit() };
+		QJsonObject json_object = temp_json_value.toObject();
+
+		const QByteArray bytearray_controller{ json_object.take("Controller").toString().toLocal8Bit() };
 
 		QList<QByteArray> list_parameters{};
 
-		Q_FOREACH(const QString & temp_string, temp_json_value.toObject().take("Parameters").toString().split(','))
+		Q_FOREACH(const QString & temp_string, json_object.take("Parameters").toString().split(','))
 		{
 			list_parameters.emplace_back(temp_string.trimmed().toLocal8Bit());
 		}
 
-		const QByteArray bytearray_sql{ temp_json_value.toObject().take("SQLString").toString().toLocal8Bit() };
+		const QByteArray bytearray_sql{ json_object.take("SQLString").toString().toLocal8Bit() };
 
-		this->InsertSimpleServer(bytearray_controller, list_parameters, bytearray_sql);
+		const QByteArray bytearray_method{ json_object.take("Method").toString().toLocal8Bit() };
+
+		this->InsertSimpleServer(bytearray_controller, bytearray_method, list_parameters, bytearray_sql);
 	});
+}
+
+auto SimpleServers::GetSimpleServersMap(void) ->QMap<QByteArray, SimpleServer>
+{
+	return map_simple_servers_;
 }

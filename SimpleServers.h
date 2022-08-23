@@ -7,17 +7,21 @@ class SimpleServers
 {
 public:
 	SimpleServers();
-	typedef struct
+	struct SimpleServer
 	{
 		//QByteArray *controller;
+		QString method;
 		QList<QByteArray> list_parameters;
 		QByteArray bytearray_sql;
 
-	} SimpleServer;
+	};
 	auto InitSimpleServers() -> void;
-	auto InsertSimpleServer(const QByteArray&, const QList<QByteArray>&, const QByteArray&) -> void;
+	auto InsertSimpleServer(const QByteArray&, const QByteArray&, const QList<QByteArray>&, const QByteArray&) -> void;
 	static auto EraseSimpleServer() -> void;
 	auto InitSimpleServersFromJson(const QJsonArray&) -> void;
+	auto GetSimpleServersMap(void)->QMap<QByteArray, SimpleServer>;
+
+private:
 	QMap<QByteArray, SimpleServer> map_simple_servers_{};
 };
 

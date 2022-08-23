@@ -1,11 +1,13 @@
 {
-  "WebControl": {
+  "WebController": {
     "WebServer": true,
     "WebServerName": "vueWebServer",
     "UserName": "admin",
     "Password": "admintest"
   },
+  "HttpServerIPAddress": "10.11.12.6",
   "HttpServerPort": "18080",
+  "HttpServerLogLever": "Info",
   "MySQL": {
     "Host": "127.0.0.1",
     "Port": "3306",
@@ -15,12 +17,14 @@
   },
   "SimpleServers": [
     {
-      "Control": "/Login",
+      "Controller": "/Login",
+      "Method": "POST",
       "Parameters": "UserName, Password",
       "SQLString": "call test.sp_TestLogin"
     },
     {
-      "Control": "/api/user/login",
+      "Controller": "/api/user/login",
+      "Methos": "POST",
       "Parameters": "eamil, password",
       "SQLString": "call test.sp_TestLogin"
     }

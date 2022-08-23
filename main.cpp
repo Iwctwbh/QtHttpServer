@@ -1,3 +1,5 @@
+//#pragma execution_character_set("utf-8")
+
 #include <QtCore/QCoreApplication>
 #include <QtSql>
 
@@ -37,9 +39,10 @@ int main(int argc, char* argv[])
 
 				if (const QJsonDocument json_document_simple_server{ QJsonDocument{json_object_simple_server.value("SimpleServers").toArray()} }; json_document_simple_server.array().count() > 0)
 				{
-					qDebug() << "SimpleServers JsonAraay is correct";
-					QJsonArray json_array_simple_server{ QJsonArray{json_document_simple_server.array()} };
-					const quint16 int_http_server_port = json_object_simple_server.value("HttpServerPort").toString().toInt();
+					qDebug() << "SimpleServers JsonArray is correct";
+					const QJsonArray json_array_simple_server{ QJsonArray{json_document_simple_server.array()} };
+					const quint16 int_http_server_port = json_object_simple_server.value("HttpServerPort").toString().toUInt();
+					const QString string_http_server_ip_address = json_object_simple_server.value("HttpServerIPAddress").toString();
 
 					// Init SimpleServers
 					SimpleServers simple_servers{};
@@ -50,29 +53,22 @@ int main(int argc, char* argv[])
 
 					// Init Crow
 					crow::SimpleApp simple_app_crow{};
-
-					std::ranges::for_each(simple_servers.map_simple_servers_.keys(), [&simple_app_crow](QByteArray& temp_bytearray_key)
+					std::ranges::for_each(simple_servers.GetSimpleServersMap().keys(), [&simple_app_crow, &simple_servers](const QByteArray& temp_bytearray_key)
 					{
-						char foo[] = "/foo";
-						char abc[100];
-						int len_array{ static_cast<int>(temp_bytearray_key.size()) };
-						int len_buf{ sizeof(abc) };
-						int len = qMin(len_array, len_buf);
-						memcpy(abc, temp_bytearray_key, len);
-						crow::black_magic::const_str a{ foo };
-						CROW_ROUTE(simple_app_crow, abc).methods(crow::HTTPMethod::Post)([](const crow::request& request_request)
+						simple_app_crow.route_dynamic(std::string(temp_bytearray_key))([](const crow::request& request_request)
 						{
-							return crow::response(200);
+							auto a = method_name(request_request.method);
+							return a;
 						});
 					});
-
-					simple_app_crow.bindaddr("10.11.12.6").port(int_http_server_port).multithreaded().run_async();
+					simple_app_crow.loglevel(crow::LogLevel::Info);
+					simple_app_crow.bindaddr(std::string(string_http_server_ip_address.toLocal8Bit())).port(int_http_server_port).multithreaded().run_async();
 
 					return a->exec();
 				}
 				else
 				{
-					qDebug() << "SimpleServers JsonAraay is not correct";
+					qDebug() << "SimpleServers JsonArray is not correct";
 					system("pause");
 				}
 			}
