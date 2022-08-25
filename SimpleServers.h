@@ -1,9 +1,11 @@
 #pragma once
-#ifndef SIMPLESERVERS_H
-#define SIMPLESERVERS_H
+#ifndef SIMPLE_SERVERS_H
+#define SIMPLE_SERVERS_H
 
 #include <QtNetwork>
 #include <crow.h>
+
+#include "LogHelperHandler.h"
 
 class SimpleServers
 {
@@ -28,42 +30,41 @@ public:
 		return list_method_strings;
 	}
 
+	struct SimpleServerMiddleware : crow::ILocalMiddleware
+	{
+		QString string_message{};
+
+		void SetMessage(const QString& arg_message)
+		{
+			string_message = arg_message;
+		}
+
+		struct context
+		{
+		};
+
+		void before_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/) const
+		{
+			//CROW_LOG_DEBUG << " - MESSAGE: " << string_message;
+		}
+
+		void after_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/)
+		{
+			// no-op
+			//CROW_LOG_DEBUG << " - END";
+		}
+	};
+
 	void InitSimpleServers();
 	void InsertSimpleServer(const QByteArray&, const QByteArray&, const QList<QByteArray>&, const QByteArray&);
 	static void EraseSimpleServer();
 	void InitSimpleServersFromJson(const QJsonArray&);
 	QMap<QByteArray, SimpleServer> GetSimpleServersMap();
+	void Run();
 
 private:
 	QMap<QByteArray, SimpleServer> map_simple_servers_{};
+	LogHelperHandler handler_log_helper_;
 };
 
-class LogHelperHandler final : public crow::CerrLogHandler
-{
-public:
-	auto log(const std::string message, const crow::LogLevel level) -> void override
-	{
-		std::string prefix;
-		switch (level)
-		{
-			case crow::LogLevel::Debug:
-				prefix = "DEBUG   ";
-				break;
-			case crow::LogLevel::Info:
-				prefix = "INFO    ";
-				break;
-			case crow::LogLevel::Warning:
-				prefix = "WARNING ";
-				break;
-			case crow::LogLevel::Error:
-				prefix = "ERROR   ";
-				break;
-			case crow::LogLevel::Critical:
-				prefix = "CRITICAL";
-				break;
-		}
-		std::cerr << "(" << static_cast<std::string>(QDateTime::currentDateTime().toString().toLocal8Bit()) << ") [" << prefix << "] " << message << std::endl;
-	}
-};
-
-#endif // SIMPLESERVERS_H
+#endif // SIMPLE_SERVERS_H

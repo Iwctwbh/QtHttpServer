@@ -59,3 +59,11 @@ QMap<QByteArray, SimpleServers::SimpleServer> SimpleServers::GetSimpleServersMap
 {
 	return map_simple_servers_;
 }
+
+void SimpleServers::Run()
+{
+	// Init Crow
+	crow::logger::setHandler(&(this->handler_log_helper_));
+
+	crow::App<SimpleServers::SimpleServerMiddleware> simple_app_crow{};
+}

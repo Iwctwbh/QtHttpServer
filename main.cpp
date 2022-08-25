@@ -9,31 +9,6 @@
 
 Mysql* mysql;
 
-struct SimpleServerMiddleware : crow::ILocalMiddleware
-{
-	QString string_message{};
-
-	void SetMessage(const QString& arg_message)
-	{
-		string_message = arg_message;
-	}
-
-	struct context
-	{
-	};
-
-	auto before_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/) const -> void
-	{
-		//CROW_LOG_DEBUG << " - MESSAGE: " << string_message;
-	}
-
-	auto after_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/) -> void
-	{
-		// no-op
-		//CROW_LOG_DEBUG << " - END";
-	}
-};
-
 int main(int argc, char* argv[])
 {
 	[[maybe_unused]] const QCoreApplication* a = new QCoreApplication{ argc, argv };
@@ -78,7 +53,7 @@ int main(int argc, char* argv[])
 					LogHelperHandler handler_log_helper;
 					crow::logger::setHandler(&handler_log_helper);
 
-					crow::App<SimpleServerMiddleware> simple_app_crow{};
+					crow::App<SimpleServers::SimpleServerMiddleware> simple_app_crow{};
 					//simple_app_crow.get_middleware<SimpleServerMiddleware>().SetMessage("Hello world");
 					std::ranges::for_each(simple_servers.GetSimpleServersMap().keys(), [&simple_app_crow, &simple_servers](const QByteArray& temp_bytearray_key)
 					{
