@@ -5,9 +5,9 @@
     "UserName": "admin",
     "Password": "admintest"
   },
-  "HttpServerIPAddress": "10.11.12.6",
+  "HttpServerIpAddress": "10.11.12.6",
   "HttpServerPort": "18080",
-  "HttpServerLogLever": "1",
+  "HttpServerLogLevel": "1",
   "MySQL": {
     "Host": "127.0.0.1",
     "Port": "3306",

@@ -13,96 +13,10 @@ int main(int argc, char* argv[])
 {
 	[[maybe_unused]] const QCoreApplication* a = new QCoreApplication{ argc, argv };
 
-	if (QFile file_simple_server{ "SimpleServer.json" }; file_simple_server.exists())
-	{
-		qDebug() << "SimpleServer.json exists";
-		qDebug() << "SimpleServer.json is readable";
-		if (file_simple_server.open(QIODevice::ReadOnly))
-		{
-			qDebug() << "SimpleServer.json open success";
-			const QByteArray bytearray_simple_server = file_simple_server.readAll();
-			QJsonParseError error_json_parse{ QJsonParseError::NoError };
-			if (const QJsonDocument json_document_simple_server_file{ QJsonDocument::fromJson(bytearray_simple_server, &error_json_parse) }; error_json_parse.error == QJsonParseError::NoError && json_document_simple_server_file.isObject())
-			{
-				qDebug() << "SimpleServer.json format is correct";
-				const QJsonObject json_object_simple_server{ json_document_simple_server_file.object() };
-				const QJsonObject json_object_mysql{ json_object_simple_server.value("MySQL").toObject() };
-				mysql = new Mysql(json_object_mysql.value("Host").toString(),
-								  json_object_mysql.value("Port").toString().toInt(),
-								  json_object_mysql.value("DataBase").toString(),
-								  json_object_mysql.value("UserName").toString(),
-								  json_object_mysql.value("Password").toString(),
-								  "db_connect");
+	SimpleServers simple_servers{};
+	simple_servers.Run();
 
-				if (const QJsonDocument json_document_simple_server{ QJsonDocument{json_object_simple_server.value("SimpleServers").toArray()} }; json_document_simple_server.array().count() > 0)
-				{
-					qDebug() << "SimpleServers JsonArray is correct";
-					const QJsonArray json_array_simple_server{ QJsonArray{json_document_simple_server.array()} };
-					const uint16_t uint_http_server_port = json_object_simple_server.value("HttpServerPort").toString().toUInt();
-					const QByteArray bytearray_http_server_ip_address = json_object_simple_server.value("HttpServerIPAddress").toString().toLocal8Bit();
-					const uint16_t unit_http_server_log_level = json_object_simple_server.value("HttpServerLogLevel").toString().toUInt();
-
-					// Init SimpleServers
-					SimpleServers simple_servers{};
-					simple_servers.InitSimpleServersFromJson(json_array_simple_server);
-
-					// 连接数据库
-					mysql->connect();
-
-					// Init Crow
-					LogHelperHandler handler_log_helper;
-					crow::logger::setHandler(&handler_log_helper);
-
-					crow::App<SimpleServers::SimpleServerMiddleware> simple_app_crow{};
-					//simple_app_crow.get_middleware<SimpleServerMiddleware>().SetMessage("Hello world");
-					std::ranges::for_each(simple_servers.GetSimpleServersMap().keys(), [&simple_app_crow, &simple_servers](const QByteArray& temp_bytearray_key)
-					{
-						const QString string_method = simple_servers.GetSimpleServersMap().value(temp_bytearray_key).method;
-						const std::vector<QString> vector_method_strings{ SimpleServers::GetVectorMethodStrings() };
-						const auto iterator_vector_method_strings =
-							std::ranges::find(vector_method_strings, string_method);
-						const auto int_index_vector_method_strings = std::distance(
-							vector_method_strings.begin(), iterator_vector_method_strings);
-						simple_app_crow.route_dynamic(static_cast<std::string>(temp_bytearray_key)).methods(static_cast<crow::HTTPMethod>(int_index_vector_method_strings))([](const crow::request& request_request)
-						{
-							auto a = method_name(request_request.method);
-							auto json_string = request_request.body;
-							return a;
-						});
-					});
-					simple_app_crow.loglevel(crow::LogLevel::Info);
-					auto sync_app_crow = simple_app_crow.bindaddr(static_cast<std::string>(bytearray_http_server_ip_address)).port(uint_http_server_port).multithreaded().run_async();
-
-					qDebug() << "Init Crow Completed";
-
-					return QCoreApplication::exec();
-				}
-				else
-				{
-					qDebug() << "SimpleServers JsonArray is not correct";
-					system("pause");
-				}
-			}
-			else
-			{
-				qDebug() << "SimpleServer.json format is not correct";
-				system("pause");
-
-			}
-		}
-		else
-		{
-			qDebug() << "SimpleServer.json is not readable";
-			system("pause");
-
-		}
-	}
-	else
-	{
-		qDebug() << "SimpleServer.json is not exists";
-		system("pause");
-
-	}
+	return QCoreApplication::exec();
 }
 
 QJsonObject ConvertStringToJson(QString* str_Json)

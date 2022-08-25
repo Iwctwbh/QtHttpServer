@@ -64,7 +64,10 @@ public:
 
 private:
 	QMap<QByteArray, SimpleServer> map_simple_servers_{};
-	LogHelperHandler handler_log_helper_;
+	LogHelperHandler handler_log_helper_{};
+	QByteArray bytearray_http_server_ip_address_{};
+	uint16_t uint_http_server_port_{};
+	uint16_t unit_http_server_log_level_{};
 };
 
 #endif // SIMPLE_SERVERS_H
