@@ -4,11 +4,9 @@
 #include <QtSql>
 
 #include "mysql.h"
-#include "RequestParse.h"
 #include "SimpleServers.h"
 #include "drogon/drogon.h"
 #include "crow.h"
-#include "SimpleServers.h"
 
 void Logiccontroller(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData);
 
@@ -235,47 +233,4 @@ QByteArray TestFunction(QByteArray* PostData, SimpleServers::SimpleServer* SServ
 		return QJsonDocument::fromJson("{\"Error\":\"Error\"}").toJson();
 		qDebug() << "PostData format is not correct";
 	}
-}
-
-// 处理主函数
-void Logiccontroller(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData)
-{
-	QScopedPointer<RequestParse> requestParsing{ new RequestParse };
-
-	requestParsing->SetRequest(*byteArr_Request);
-
-	//auto iter = map_Function->find(*requestParsing->GetParameter());
-	QScopedPointer<QByteArray> Parameter{ new QByteArray{*requestParsing->GetParameter()} };
-	bool flag = false;
-	static SimpleServers::SimpleServer* simpleserver = new SimpleServers::SimpleServer;
-
-	if (flag)
-	{
-		*byteArr_ResponseData = TestFunction(requestParsing->GetPostData(), simpleserver);
-	}
-	else if (!Parameter->compare("/vueWebServer"))
-	{
-		*byteArr_ResponseData = "{\"message\" : \"success\"}";
-		*byteArr_ResponseHttp += "HTTP/1.1 200 OK\r\n";
-	}
-	else
-	{
-		*byteArr_ResponseHttp += "HTTP/1.1 404 NotFound\r\n";
-	}
-
-	*byteArr_ResponseHttp += "Server: nginx\r\n";
-	//*byteArr_ResponseHttp += "Content-Type: text/html;charset=utf-8\r\n";
-	*byteArr_ResponseHttp += "Content-Type: application/json; text/plain, charset=utf-8\r\n";
-	*byteArr_ResponseHttp += "Connection: keep-alive\r\n";
-	//*byteArr_ResponseHttp += "Access-controller-Allow-Origin: http://127.0.0.1:8080\r\n";
-	*byteArr_ResponseHttp += "Access-controller-Allow-Origin: *\r\n";
-	//*byteArr_ResponseHttp += "Access-controller-Allow-Methods: POST, OPTIONS\r\n";
-	*byteArr_ResponseHttp += "Access-controller-Allow-Headers: Access-controller-Request-Headers, Authorization, Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, X-Requested-By, If-Modified-Since, X-File-Name, X-File-Type, Cache-controller, Origin, Access-Token\r\n";
-	*byteArr_ResponseHttp += "Access-controller-Allow-Credentials: true\r\n";
-	*byteArr_ResponseHttp += "access-controller-expose-headers: Authorization\r\n";
-	*byteArr_ResponseHttp += "access-controller-expose-headers: *\r\n";
-	*byteArr_ResponseHttp += "Access-controller-Max-Age: 60\r\n";
-	*byteArr_ResponseHttp += "Vary: Accept-Encoding, Origin\r\n";
-	*byteArr_ResponseHttp += "Keep-Alive: timeout=2, max=100\r\n";
-	*byteArr_ResponseHttp += QString("Content-Length: %1\r\n\r\n").arg(QString::number((*byteArr_ResponseData).size())).toLocal8Bit();
 }

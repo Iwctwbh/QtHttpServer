@@ -94,18 +94,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="httpserver.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mysql.cpp" />
-    <ClCompile Include="RequestParse.cpp" />
     <ClCompile Include="SimpleServers.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="httpserver.h" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="mysql.h" />
-    <ClInclude Include="RequestParse.h" />
     <ClInclude Include="SimpleServers.h" />
   </ItemGroup>
   <ItemGroup>
