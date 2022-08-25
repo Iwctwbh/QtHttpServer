@@ -24,6 +24,7 @@ bool Mysql::connect()
 		setLastError("MySQL Connect Error");
 		result = false;
 	}
+	this->close();
 
 	return result;
 }
@@ -39,7 +40,7 @@ void Mysql::close()
 QSqlQuery* Mysql::QueryExec(QString sql)
 {
 	static QSqlQuery *query = new QSqlQuery(QSqlDatabase::database(_connectionName));
-	if (db.isOpen())
+	if (db.open())
 	{
 		if (!query->exec(sql))
 		{
@@ -54,6 +55,7 @@ QSqlQuery* Mysql::QueryExec(QString sql)
 	{
 		setLastError("MySQL Connection Closed");
 	}
+	this->close();
 	return query;
 }
 

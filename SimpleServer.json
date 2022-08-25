@@ -7,7 +7,7 @@
   },
   "HttpServerIPAddress": "10.11.12.6",
   "HttpServerPort": "18080",
-  "HttpServerLogLever": "Info",
+  "HttpServerLogLever": "1",
   "MySQL": {
     "Host": "127.0.0.1",
     "Port": "3306",
@@ -18,7 +18,7 @@
   "SimpleServers": [
     {
       "Controller": "/Login",
-      "Method": "POST",
+      "Method": "GET",
       "Parameters": "UserName, Password",
       "SQLString": "call test.sp_TestLogin"
     },

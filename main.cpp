@@ -8,14 +8,79 @@
 #include "SimpleServers.h"
 #include "drogon/drogon.h"
 #include "crow.h"
+#include "SimpleServers.h"
 
 void Logiccontroller(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData);
 
 Mysql* mysql;
 
+constexpr std::vector<QString> GetVectorMethodStrings()
+{
+	std::vector<QString> list_method_strings{};
+	std::ranges::for_each(crow::method_strings, [&](const char* temp_ptr_char)
+	{
+		list_method_strings.emplace_back(temp_ptr_char);
+	});
+	return list_method_strings;
+}
+
+class LogHelperHandler final : public crow::CerrLogHandler
+{
+public:
+	auto log(const std::string message, const crow::LogLevel level) -> void override
+	{
+		std::string prefix;
+		switch (level)
+		{
+			case crow::LogLevel::Debug:
+				prefix = "DEBUG   ";
+				break;
+			case crow::LogLevel::Info:
+				prefix = "INFO    ";
+				break;
+			case crow::LogLevel::Warning:
+				prefix = "WARNING ";
+				break;
+			case crow::LogLevel::Error:
+				prefix = "ERROR   ";
+				break;
+			case crow::LogLevel::Critical:
+				prefix = "CRITICAL";
+				break;
+		}
+		std::cerr << "(" << static_cast<std::string>(QDateTime::currentDateTime().toString().toLocal8Bit()) << ") [" << prefix << "] " << message << std::endl;
+	}
+};
+
+struct SimpleServerMiddleware : crow::ILocalMiddleware
+{
+	QString string_message{};
+
+	void SetMessage(const QString& arg_message)
+	{
+		string_message = arg_message;
+	}
+
+	struct context
+	{
+	};
+
+	auto before_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/) const -> void
+	{
+		//CROW_LOG_DEBUG << " - MESSAGE: " << string_message;
+	}
+
+	auto after_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/) -> void
+	{
+		// no-op
+		//CROW_LOG_DEBUG << " - END";
+	}
+};
+
 int main(int argc, char* argv[])
 {
-	const QCoreApplication* a = new QCoreApplication{ argc, argv };
+	[[maybe_unused]] const QCoreApplication* a = new QCoreApplication{ argc, argv };
+
 	if (QFile file_simple_server{ "SimpleServer.json" }; file_simple_server.exists())
 	{
 		qDebug() << "SimpleServer.json exists";
@@ -41,8 +106,9 @@ int main(int argc, char* argv[])
 				{
 					qDebug() << "SimpleServers JsonArray is correct";
 					const QJsonArray json_array_simple_server{ QJsonArray{json_document_simple_server.array()} };
-					const quint16 int_http_server_port = json_object_simple_server.value("HttpServerPort").toString().toUInt();
-					const QString string_http_server_ip_address = json_object_simple_server.value("HttpServerIPAddress").toString();
+					const uint16_t uint_http_server_port = json_object_simple_server.value("HttpServerPort").toString().toUInt();
+					const QByteArray bytearray_http_server_ip_address = json_object_simple_server.value("HttpServerIPAddress").toString().toLocal8Bit();
+					const uint16_t unit_http_server_log_level = json_object_simple_server.value("HttpServerLogLevel").toString().toUInt();
 
 					// Init SimpleServers
 					SimpleServers simple_servers{};
@@ -52,19 +118,32 @@ int main(int argc, char* argv[])
 					mysql->connect();
 
 					// Init Crow
-					crow::SimpleApp simple_app_crow{};
+					LogHelperHandler handler_log_helper;
+					crow::logger::setHandler(&handler_log_helper);
+
+					crow::App<SimpleServerMiddleware> simple_app_crow{};
+					//simple_app_crow.get_middleware<SimpleServerMiddleware>().SetMessage("Hello world");
 					std::ranges::for_each(simple_servers.GetSimpleServersMap().keys(), [&simple_app_crow, &simple_servers](const QByteArray& temp_bytearray_key)
 					{
-						simple_app_crow.route_dynamic(std::string(temp_bytearray_key))([](const crow::request& request_request)
+						const QString string_method = simple_servers.GetSimpleServersMap().value(temp_bytearray_key).method;
+						const std::vector<QString> vector_method_strings{ GetVectorMethodStrings() };
+						const auto iterator_vector_method_strings =
+							std::ranges::find(vector_method_strings, string_method);
+						const auto int_index_vector_method_strings = std::distance(
+							vector_method_strings.begin(), iterator_vector_method_strings);
+						simple_app_crow.route_dynamic(static_cast<std::string>(temp_bytearray_key)).methods(static_cast<crow::HTTPMethod>(int_index_vector_method_strings))([](const crow::request& request_request)
 						{
 							auto a = method_name(request_request.method);
+							auto json_string = request_request.body;
 							return a;
 						});
 					});
 					simple_app_crow.loglevel(crow::LogLevel::Info);
-					simple_app_crow.bindaddr(std::string(string_http_server_ip_address.toLocal8Bit())).port(int_http_server_port).multithreaded().run_async();
+					auto sync_app_crow = simple_app_crow.bindaddr(static_cast<std::string>(bytearray_http_server_ip_address)).port(uint_http_server_port).multithreaded().run_async();
 
-					return a->exec();
+					qDebug() << "Init Crow Completed";
+
+					return QCoreApplication::exec();
 				}
 				else
 				{
