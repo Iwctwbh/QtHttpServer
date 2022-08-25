@@ -3,12 +3,15 @@
 SimpleServers::SimpleServers()
 = default;
 
-auto SimpleServers::InitSimpleServers() -> void
+void SimpleServers::InitSimpleServers()
 {
 	this->map_simple_servers_.clear();
 }
 
-auto SimpleServers::InsertSimpleServer(const QByteArray& arg_bytearray_controller, const QByteArray& arg_bytearray_method, const QList<QByteArray>& arg_list_parameters, const QByteArray& arg_bytearray_sql) -> void
+void SimpleServers::InsertSimpleServer(const QByteArray& arg_bytearray_controller,
+                                       const QByteArray& arg_bytearray_method,
+                                       const QList<QByteArray>& arg_list_parameters,
+                                       const QByteArray& arg_bytearray_sql)
 {
 	//QByteArray QByteArray_MD5_Temp = QCryptographicHash::hash(*QByteArray_controller_Temp, QCryptographicHash::Md5).toHex();
 	const SimpleServers::SimpleServer simple_servers{ arg_bytearray_method, arg_list_parameters, arg_bytearray_sql };
@@ -22,12 +25,12 @@ auto SimpleServers::InsertSimpleServer(const QByteArray& arg_bytearray_controlle
 	}
 }
 
-auto SimpleServers::EraseSimpleServer() -> void
+void SimpleServers::EraseSimpleServer()
 {
 
 }
 
-auto SimpleServers::InitSimpleServersFromJson(const QJsonArray& arg_json_array) -> void
+void SimpleServers::InitSimpleServersFromJson(const QJsonArray& arg_json_array)
 {
 	this->InitSimpleServers();
 
@@ -52,7 +55,7 @@ auto SimpleServers::InitSimpleServersFromJson(const QJsonArray& arg_json_array) 
 	});
 }
 
-auto SimpleServers::GetSimpleServersMap(void) ->QMap<QByteArray, SimpleServer>
+QMap<QByteArray, SimpleServers::SimpleServer> SimpleServers::GetSimpleServersMap()
 {
 	return map_simple_servers_;
 }

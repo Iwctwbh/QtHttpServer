@@ -2,53 +2,12 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtSql>
+#include <crow.h>
 
 #include "mysql.h"
 #include "SimpleServers.h"
-#include "drogon/drogon.h"
-#include "crow.h"
-
-void Logiccontroller(QByteArray* byteArr_Request, QByteArray* byteArr_ResponseHttp, QByteArray* byteArr_ResponseData);
 
 Mysql* mysql;
-
-constexpr std::vector<QString> GetVectorMethodStrings()
-{
-	std::vector<QString> list_method_strings{};
-	std::ranges::for_each(crow::method_strings, [&](const char* temp_ptr_char)
-	{
-		list_method_strings.emplace_back(temp_ptr_char);
-	});
-	return list_method_strings;
-}
-
-class LogHelperHandler final : public crow::CerrLogHandler
-{
-public:
-	auto log(const std::string message, const crow::LogLevel level) -> void override
-	{
-		std::string prefix;
-		switch (level)
-		{
-			case crow::LogLevel::Debug:
-				prefix = "DEBUG   ";
-				break;
-			case crow::LogLevel::Info:
-				prefix = "INFO    ";
-				break;
-			case crow::LogLevel::Warning:
-				prefix = "WARNING ";
-				break;
-			case crow::LogLevel::Error:
-				prefix = "ERROR   ";
-				break;
-			case crow::LogLevel::Critical:
-				prefix = "CRITICAL";
-				break;
-		}
-		std::cerr << "(" << static_cast<std::string>(QDateTime::currentDateTime().toString().toLocal8Bit()) << ") [" << prefix << "] " << message << std::endl;
-	}
-};
 
 struct SimpleServerMiddleware : crow::ILocalMiddleware
 {
@@ -124,7 +83,7 @@ int main(int argc, char* argv[])
 					std::ranges::for_each(simple_servers.GetSimpleServersMap().keys(), [&simple_app_crow, &simple_servers](const QByteArray& temp_bytearray_key)
 					{
 						const QString string_method = simple_servers.GetSimpleServersMap().value(temp_bytearray_key).method;
-						const std::vector<QString> vector_method_strings{ GetVectorMethodStrings() };
+						const std::vector<QString> vector_method_strings{ SimpleServers::GetVectorMethodStrings() };
 						const auto iterator_vector_method_strings =
 							std::ranges::find(vector_method_strings, string_method);
 						const auto int_index_vector_method_strings = std::distance(
