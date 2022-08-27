@@ -1,0 +1,115 @@
+{
+  "tasks": [
+    {
+      "type": "cppbuild",
+      "label": "C/C++: cl.exe 生成活动文件",
+      "command": "cl.exe",
+      "args": [
+        "/c",
+        "/Zi",
+        "/EHsc",
+        "/nologo",
+        "/IC:/Qt/6.2.2/msvc2019_64/include",
+        "/IC:/Qt/6.2.2/msvc2019_64/include/QtCore",
+        "/IC:/Qt/6.2.2/msvc2019_64/include/QtSql",
+        "/ID:/vcpkg/installed/x64-windows/include",
+        "/std:c++latest",
+        "/Zc:__cplusplus",
+        "/D_WINDOWS",
+        "/DUNICODE",
+        "/D_UNICODE",
+        "/DWIN32",
+        "/D_ENABLE_EXTENDED_ALIGNED_STORAGE",
+        "/DWIN64",
+        "/DNDEBUG",
+        "/DQT_NO_DEBUG",
+        "/DQT_GUI_LIB",
+        "/DQT_SQL_LIB",
+        "/DQT_NETWORK_LIB",
+        "/DQT_CORE_LIB",
+        "/W1",
+        "/WX-",
+        "/MP",
+        "/Od",
+        "/diagnostics:column",
+        "/Gm-",
+        "/EHsc",
+        "/MDd",
+        "/GS",
+        "/fp:precise",
+        "/Zc:wchar_t",
+        "/Zc:forScope",
+        "/Zc:inline",
+        "/Fox64/Debug\\",
+        "/Fdx64/Debug/vc143.pdb",
+        "/external:W1",
+        "/Gd",
+        "/TP",
+        "/FC",
+        "/errorReport:prompt",
+        "/Zc:rvalueCast",
+        "/Zc:strictStrings",
+        "/Zc:throwingNew",
+        "/permissive-",
+        "/Zc:externConstexpr",
+        "/utf-8",
+        //"/Fe${fileDirname}\\${fileBasenameNoExtension}.exe",
+        "${file}"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "problemMatcher": ["$msCompile"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "调试器生成的任务。"
+    },
+    {
+      "type": "cppbuild",
+      "label": "C/C++: g++.exe 生成活动文件",
+      "command": "C:\\Qt\\Tools\\mingw900_64\\bin\\g++.exe",
+      "args": [
+        "-fdiagnostics-color=always",
+        "-g",
+        "${file}",
+        "-I/Qt/6.2.2/msvc2019_64/include",
+        "-I/Qt/6.2.2/msvc2019_64/include/QtCore",
+        "-I/Qt/6.2.2/msvc2019_64/include/QtSql",
+        "-ID:/vcpkg/installed/x64-windows/include",
+        "-o",
+        "${fileDirname}\\${fileBasenameNoExtension}.exe"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": "build",
+      "detail": "调试器生成的任务。"
+    },
+    {
+      "type": "cppbuild",
+      "label": "C/C++: cpp.exe 生成活动文件",
+      "command": "C:\\Qt\\Tools\\mingw900_64\\bin\\cpp.exe",
+      "args": [
+        "-fdiagnostics-color=always",
+        "-g",
+        "${file}",
+        "-I/Qt/6.2.2/msvc2019_64/include",
+        "-I/Qt/6.2.2/msvc2019_64/include/QtCore",
+        "-I/Qt/6.2.2/msvc2019_64/include/QtSql",
+        "-ID:/vcpkg/installed/x64-windows/include",
+        "-o",
+        "${fileDirname}\\${fileBasenameNoExtension}.exe"
+      ],
+      "options": {
+        "cwd": "${fileDirname}"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": "build",
+      "detail": "调试器生成的任务。"
+    }
+  ],
+  "version": "2.0.0"
+}

@@ -2,21 +2,14 @@
 #ifndef MYSQL_H
 #define MYSQL_H
 
-#include <QObject>
-#include <QSqlDatabase>
 #include <QSqlQuery>
-#include <QSqlError>
-#include <QMutex>
-#include <QVariantMap>
-#include <QSqlQueryModel>
-#include <QTime>
 
 class Mysql
 {
 public:
 	Mysql(QString hostname, int port, QString dbname, QString username, QString pwd, QString connectionName);
-	bool connect(void);
-	void close(void);
+	bool connect();
+	void close();
 
 	QSqlQuery* QueryExec(QString sql);
 

@@ -2,8 +2,8 @@
 #ifndef SIMPLE_SERVERS_H
 #define SIMPLE_SERVERS_H
 
-#include <QtNetwork>
 #include <crow.h>
+#include <QtCore/QtCore>
 
 #include "LogHelperHandler.h"
 
