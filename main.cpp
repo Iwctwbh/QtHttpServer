@@ -1,7 +1,6 @@
 //#pragma execution_character_set("utf-8")
 
 #include <QtCore/QCoreApplication>
-#include <QtSql>
 
 #include "mysql.h"
 #include "SimpleServers.h"

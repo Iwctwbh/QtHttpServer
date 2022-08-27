@@ -116,7 +116,7 @@ void SimpleServers::Run()
 						simple_app_crow.route_dynamic(static_cast<std::string>(temp_bytearray_key)).methods(static_cast<crow::HTTPMethod>(int_index_vector_method_strings))([](const crow::request& request_request)
 						{
 							auto a = method_name(request_request.method);
-							const QString string_temp = R"({"method":")" + QString::fromStdString(a) +R"("})";
+							const QString string_temp = R"({"method":")" + QString::fromLocal8Bit(a.data()) +R"("})";
 							return static_cast<std::string>(string_temp.toLocal8Bit());
 						});
 					});
