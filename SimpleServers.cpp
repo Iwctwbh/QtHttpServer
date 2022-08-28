@@ -1,4 +1,4 @@
-#include "SimpleServers.h"
+ï»¿#include "SimpleServers.h"
 
 SimpleServers::SimpleServers()
 = default;
@@ -21,7 +21,7 @@ void SimpleServers::InsertSimpleServer(const QByteArray& arg_bytearray_controlle
 	}
 	else
 	{
-		qDebug() << L"²»ÄÜÓÐÁ½¸öÏàÍ¬µÄ¿ØÖÆÆ÷ Can't add two identical controllers";
+		qDebug() << L"ä¸èƒ½æœ‰ä¸¤ä¸ªç›¸åŒçš„æŽ§åˆ¶å™¨ Can't add two identical controllers";
 	}
 }
 
@@ -95,7 +95,7 @@ void SimpleServers::Run()
 					// Init SimpleServers
 					InitSimpleServersFromJson(json_array_simple_server);
 
-					// Á¬½ÓÊý¾Ý¿â
+					// è¿žæŽ¥æ•°æ®åº“
 					//mysql->connect();
 
 					// Init Crow
