@@ -5,8 +5,8 @@
     "UserName": "admin",
     "Password": "admintest"
   },
-  "HttpServerIpAddress": "10.11.12.6",
-  "HttpServerPort": "18080",
+  "HttpServerIpAddress": "[::1]",
+  "HttpServerPort": "8080",
   "HttpServerLogLevel": "1",
   "MySQL": {
     "Host": "127.0.0.1",
@@ -17,10 +17,24 @@
   },
   "SimpleServers": [
     {
-      "Controller": "/Login",
-      "Method": "GET",
+      "Controller": "/login",
+      "Method": "POST",
       "Parameters": "UserName, Password",
       "SQLString": "call test.sp_TestLogin"
+    },
+    {
+      "Controller": "/logout",
+      "Method": "POST"
+    },
+    {
+      "Controller": "/getInfo",
+      "Method": "POST",
+      "Response": "{}"
+    },
+    {
+      "Controller": "/captchaImage",
+      "Method": "POST",
+      "Response": "{}"
     },
     {
       "Controller": "/api/user/login",

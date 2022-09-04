@@ -14,15 +14,15 @@ public:
 	struct SimpleServer
 	{
 		//QByteArray *controller;
-		QString method;
-		QList<QByteArray> list_parameters;
-		QByteArray bytearray_sql;
-
+		QByteArray method{};
+		QList<QByteArray> list_parameters{};
+		QByteArray bytearray_sql{};
+		QByteArray bytearray_response{};
 	};
 
-	static constexpr std::vector<QString> GetVectorMethodStrings()
+	static constexpr std::vector<QByteArray> GetVectorMethodStrings()
 	{
-		std::vector<QString> list_method_strings{};
+		std::vector<QByteArray> list_method_strings{};
 		std::ranges::for_each(crow::method_strings, [&](const char* temp_ptr_char)
 		{
 			list_method_strings.emplace_back(temp_ptr_char);
@@ -59,7 +59,7 @@ public:
 	void InsertSimpleServer(const QByteArray&, const QByteArray&, const QList<QByteArray>&, const QByteArray&);
 	static void EraseSimpleServer();
 	void InitSimpleServersFromJson(const QJsonArray&);
-	QMap<QByteArray, SimpleServer> GetSimpleServersMap();
+	QMap<QByteArray, SimpleServer>& GetSimpleServersMap();
 	void Run();
 
 private:
