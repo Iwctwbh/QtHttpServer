@@ -11,10 +11,11 @@ void SimpleServers::InitSimpleServers()
 void SimpleServers::InsertSimpleServer(const QByteArray& arg_bytearray_controller,
 									   const QByteArray& arg_bytearray_method,
 									   const QList<QByteArray>& arg_list_parameters,
-									   const QByteArray& arg_bytearray_sql)
+									   const QByteArray& arg_bytearray_sql,
+									   const QByteArray& arg_bytearray_response)
 {
 	//QByteArray QByteArray_MD5_Temp = QCryptographicHash::hash(*QByteArray_controller_Temp, QCryptographicHash::Md5).toHex();
-	const SimpleServers::SimpleServer simple_servers{ arg_bytearray_method, arg_list_parameters, arg_bytearray_sql };
+	const SimpleServer simple_servers{ arg_bytearray_method, arg_list_parameters, arg_bytearray_sql, arg_bytearray_response };
 	if (!map_simple_servers_.contains(arg_bytearray_controller))
 	{
 		map_simple_servers_.insert(arg_bytearray_controller, simple_servers);
@@ -51,7 +52,9 @@ void SimpleServers::InitSimpleServersFromJson(const QJsonArray& arg_json_array)
 
 		const QByteArray bytearray_method{ json_object.take("Method").toString().toLocal8Bit() };
 
-		InsertSimpleServer(bytearray_controller, bytearray_method, list_parameters, bytearray_sql);
+		const QByteArray bytearray_response{ json_object.take("Response").toString().toLocal8Bit() };
+
+		InsertSimpleServer(bytearray_controller, bytearray_method, list_parameters, bytearray_sql, bytearray_response);
 	});
 }
 
@@ -103,18 +106,22 @@ void SimpleServers::Run()
 					crow::logger::setHandler(&handler_log_helper);
 
 					crow::App<SimpleServerMiddleware> simple_app_crow{};
-					std::ranges::for_each(GetSimpleServersMap().keys(), [this, &simple_app_crow](const QByteArray& temp_bytearray_key)
+					std::ranges::for_each(map_simple_servers_.keys(), [this, &simple_app_crow](const QByteArray& temp_bytearray_key)
 					{
-						const QString string_method = GetSimpleServersMap().value(temp_bytearray_key).method;
+						const QString string_method = map_simple_servers_.value(temp_bytearray_key).method;
 						const std::vector<QByteArray> vector_method_strings{ GetVectorMethodStrings() };
 						const auto iterator_vector_method_strings =
 							std::ranges::find(vector_method_strings, string_method);
 						const auto int_index_vector_method_strings = std::distance(
 							vector_method_strings.begin(), iterator_vector_method_strings);
-						simple_app_crow.route_dynamic(static_cast<std::string>(temp_bytearray_key)).methods(static_cast<crow::HTTPMethod>(int_index_vector_method_strings))([](const crow::request& request_request)
+						simple_app_crow.route_dynamic(static_cast<std::string>(temp_bytearray_key)).methods(static_cast<crow::HTTPMethod>(int_index_vector_method_strings))([this](const crow::request& request_request)
 						{
+							if (map_simple_servers_.value(request_request.url.data()).bytearray_response != "")
+							{
+								return static_cast < std::string>(R"({"data":")" + map_simple_servers_.value(request_request.url.data()).bytearray_response + R"("})");
+							}
 							auto a = method_name(request_request.method);
-							const QString string_temp = R"({"method":")" + QString::fromLocal8Bit(a.data()) +R"("})";
+							const QString string_temp = R"({"method":")" + QString::fromLocal8Bit(a.data()) + R"("})";
 							return static_cast<std::string>(string_temp.toLocal8Bit());
 						});
 					});

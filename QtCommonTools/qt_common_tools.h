@@ -3,17 +3,12 @@
 #include "qt_common_tools_global.h"
 
 #include <QtCore/QtCore>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
-//QT_BEGIN_NAMESPACE
-//class QConvert;
-//QT_END_NAMESPACE
-
+//#include <opencv2/core/core.hpp>
+//#include <opencv2/highgui/highgui.hpp>
 
 class QTCOMMONTOOLS_EXPORT QtCommonTools
 {
 public:
 	QtCommonTools();
-	QString ConvertImgToBase64(std::string string_path);
+	static QByteArray ConvertImgToBase64(const QString& string_path);
 };

@@ -29,7 +29,7 @@
     {
       "Controller": "/getInfo",
       "Method": "POST",
-      "Response": "{}"
+      "Response": "2333"
     },
     {
       "Controller": "/captchaImage",

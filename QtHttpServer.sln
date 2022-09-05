@@ -4,8 +4,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.3.32819.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtHttpServer", "QtHttpServer\QtHttpServer.vcxproj", "{A2307401-ECF5-415A-846A-64EA6229F43F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B027ACB4-FD16-485F-BFB8-595CA079C064} = {B027ACB4-FD16-485F-BFB8-595CA079C064}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtCommonTools", "QtCommonTools\QtCommonTools.vcxproj", "{B027ACB4-FD16-485F-BFB8-595CA079C064}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resource", "Resource", "{1DF85EC7-558D-4D3C-87A3-DAC4938AF32A}"
+	ProjectSection(SolutionItems) = preProject
+		Resource\YQRC.png = Resource\YQRC.png
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

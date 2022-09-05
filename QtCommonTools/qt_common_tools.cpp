@@ -1,16 +1,22 @@
-#include "qt_common_tools.h"
+﻿#include "qt_common_tools.h"
 
 QtCommonTools::QtCommonTools()
 {
 }
 
-QString QtCommonTools::ConvertImgToBase64(std::string string_path)
+QByteArray QtCommonTools::ConvertImgToBase64(const QString& string_path)
 {
-	//cv::Mat image = cv::imread(string_path, 1);
-	std::vector<uint8_t> buffer;
-	//cv::imencode(".png", image, buffer);
-	//QByteArray byteArray = QByteArray::fromRawData((const char*)buffer.data(), buffer.size());
-	////std::string a(buffer.begin(), buffer.end());
-	////QString base64Image(byteArray.toBase64());
-	return "string_path";
+	QByteArray bytearray_image_base64{};
+	QFile file(string_path);  //strFilePath 路径
+	if (file.open(QIODevice::ReadOnly))
+	{
+		QByteArray bytearray_file = file.readAll();
+		//const std::vector<char> vector_file_data(bytearray_file.data(), bytearray_file.data() + bytearray_file.size());
+		//std::vector<uint8_t> buffer;
+		//cv::Mat mat_image = cv::imdecode(cv::Mat(vector_file_data), 1);  //>0 Return a 3-channel color image
+		bytearray_image_base64 = bytearray_file.toBase64();
+		file.close();
+	}
+
+	return bytearray_image_base64;
 }

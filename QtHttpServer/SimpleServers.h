@@ -56,9 +56,13 @@ public:
 	};
 
 	void InitSimpleServers();
-	void InsertSimpleServer(const QByteArray&, const QByteArray&, const QList<QByteArray>&, const QByteArray&);
+	void InsertSimpleServer(const QByteArray& arg_bytearray_controller,
+							const QByteArray& arg_bytearray_method,
+							const QList<QByteArray>& arg_list_parameters,
+							const QByteArray& arg_bytearray_sql,
+							const QByteArray& arg_bytearray_response);
 	static void EraseSimpleServer();
-	void InitSimpleServersFromJson(const QJsonArray&);
+	void InitSimpleServersFromJson(const QJsonArray& arg_json_array);
 	QMap<QByteArray, SimpleServer>& GetSimpleServersMap();
 	void Run();
 
