@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "qtnetwork": "cpp",
+    "qtsql": "cpp",
+    "qcoreapplication": "cpp"
+  }
+}
