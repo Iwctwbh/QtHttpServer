@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32819.101
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtHttpServer", "QtHttpServer\QtHttpServer.vcxproj", "{A2307401-ECF5-415A-846A-64EA6229F43F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtCommonTools", "QtCommonTools\QtCommonTools.vcxproj", "{B027ACB4-FD16-485F-BFB8-595CA079C064}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A2307401-ECF5-415A-846A-64EA6229F43F}.Debug|x64.ActiveCfg = Debug|x64
+		{A2307401-ECF5-415A-846A-64EA6229F43F}.Debug|x64.Build.0 = Debug|x64
+		{A2307401-ECF5-415A-846A-64EA6229F43F}.Release|x64.ActiveCfg = Release|x64
+		{A2307401-ECF5-415A-846A-64EA6229F43F}.Release|x64.Build.0 = Release|x64
+		{B027ACB4-FD16-485F-BFB8-595CA079C064}.Debug|x64.ActiveCfg = Debug|x64
+		{B027ACB4-FD16-485F-BFB8-595CA079C064}.Debug|x64.Build.0 = Debug|x64
+		{B027ACB4-FD16-485F-BFB8-595CA079C064}.Release|x64.ActiveCfg = Release|x64
+		{B027ACB4-FD16-485F-BFB8-595CA079C064}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7D705D7F-BDC1-4CB8-9750-50CA7D716335}
+	EndGlobalSection
+EndGlobal
