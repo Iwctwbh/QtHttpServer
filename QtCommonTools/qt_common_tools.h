@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "qt_common_tools_global.h"
 
