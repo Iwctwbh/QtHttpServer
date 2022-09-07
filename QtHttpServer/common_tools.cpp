@@ -1,10 +1,6 @@
-﻿#include "qt_common_tools.h"
+#include "common_tools.h"
 
-QtCommonTools::QtCommonTools()
-{
-}
-
-QByteArray QtCommonTools::ConvertImgToBase64(const QByteArray &string_path)
+QByteArray QtCommonTools::ConvertImgToBase64(const QByteArray& string_path)
 {
 	QByteArray bytearray_image_base64{};
 	if (QFile file(string_path); file.open(QIODevice::ReadOnly))

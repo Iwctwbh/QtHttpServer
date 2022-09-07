@@ -33,8 +33,8 @@
     },
     {
       "Controller": "/captchaImage",
-      "Method": "POST",
-      "Response": "{}"
+      "Method": "GET",
+      "Response": "..\\Resource\\YQRC.png"
     },
     {
       "Controller": "/api/user/login",

@@ -10,5 +10,5 @@ class QTCOMMONTOOLS_EXPORT QtCommonTools
 {
 public:
 	QtCommonTools();
-	static QByteArray ConvertImgToBase64(const QString& string_path);
+	static QByteArray ConvertImgToBase64(const QByteArray &string_path);
 };

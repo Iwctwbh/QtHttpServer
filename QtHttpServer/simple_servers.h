@@ -5,12 +5,15 @@
 #include <crow.h>
 #include <QtCore/QtCore>
 
-#include "LogHelperHandler.h"
+#include "log_helper_handler.h"
+//#include "qt_common_tools.h"
+#include "common_tools.h"
 
-class SimpleServers
+class SimpleServers final : public QObject
 {
+	Q_OBJECT
 public:
-	SimpleServers();
+	explicit SimpleServers(QObject *parent = nullptr);
 	struct SimpleServer
 	{
 		//QByteArray *controller;
@@ -23,7 +26,7 @@ public:
 	static std::vector<QByteArray> GetVectorMethodStrings()
 	{
 		std::vector<QByteArray> list_method_strings{};
-		std::ranges::for_each(crow::method_strings, [&](const char* temp_ptr_char)
+		std::ranges::for_each(crow::method_strings, [&](const char *temp_ptr_char)
 		{
 			list_method_strings.emplace_back(temp_ptr_char);
 		});
@@ -34,7 +37,7 @@ public:
 	{
 		QString string_message{};
 
-		void SetMessage(const QString& arg_message)
+		void SetMessage(const QString &arg_message)
 		{
 			string_message = arg_message;
 		}
@@ -43,12 +46,12 @@ public:
 		{
 		};
 
-		void before_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/) const
+		void before_handle(crow::request & /*req*/, crow::response & /*res*/, context & /*ctx*/) const
 		{
 			//CROW_LOG_DEBUG << " - MESSAGE: " << string_message;
 		}
 
-		void after_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/)
+		void after_handle(crow::request & /*req*/, crow::response & /*res*/, context & /*ctx*/)
 		{
 			// no-op
 			//CROW_LOG_DEBUG << " - END";
@@ -56,15 +59,20 @@ public:
 	};
 
 	void InitSimpleServers();
-	void InsertSimpleServer(const QByteArray& arg_bytearray_controller,
-							const QByteArray& arg_bytearray_method,
-							const QList<QByteArray>& arg_list_parameters,
-							const QByteArray& arg_bytearray_sql,
-							const QByteArray& arg_bytearray_response);
+	void InsertSimpleServer(const QByteArray &arg_bytearray_controller,
+							const QByteArray &arg_bytearray_method,
+							const QList<QByteArray> &arg_list_parameters,
+							const QByteArray &arg_bytearray_sql,
+							const QByteArray &arg_bytearray_response);
 	static void EraseSimpleServer();
-	void InitSimpleServersFromJson(const QJsonArray& arg_json_array);
-	QMap<QByteArray, SimpleServer>& GetSimpleServersMap();
+	void InitSimpleServersFromJson(const QJsonArray &arg_json_array);
+	QMap<QByteArray, SimpleServer> &GetSimpleServersMap();
 	void Run();
+
+	void emit_run();
+
+signals:
+	void signal_run();
 
 private:
 	QMap<QByteArray, SimpleServer> map_simple_servers_{};

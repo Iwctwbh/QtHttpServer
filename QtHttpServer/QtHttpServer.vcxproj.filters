@@ -25,7 +25,10 @@
     <ClCompile Include="mysql.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SimpleServers.cpp">
+    <ClCompile Include="simple_servers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="common_tools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -33,10 +36,10 @@
     <ClInclude Include="mysql.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SimpleServers.h">
+    <ClInclude Include="log_helper_handler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LogHelperHandler.h">
+    <ClInclude Include="common_tools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -45,5 +48,10 @@
     <None Include="SimpleServer.json">
       <Filter>Resource Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="simple_servers.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

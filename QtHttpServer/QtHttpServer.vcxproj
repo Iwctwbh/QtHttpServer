@@ -66,6 +66,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalOptions>/utf-8 /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>..\QtCommonTools;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link />
     <Link>
@@ -108,14 +109,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="common_tools.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mysql.cpp" />
-    <ClCompile Include="SimpleServers.cpp" />
+    <ClCompile Include="simple_servers.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LogHelperHandler.h" />
+    <ClInclude Include="common_tools.h" />
+    <ClInclude Include="log_helper_handler.h" />
     <ClInclude Include="mysql.h" />
-    <ClInclude Include="SimpleServers.h" />
+    <QtMoc Include="simple_servers.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
