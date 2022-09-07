@@ -71,7 +71,7 @@ void SimpleServers::Run()
 	if (QFile file_simple_server{ "SimpleServer.json" }; file_simple_server.exists())
 	{
 		qDebug() << "SimpleServer.json exists";
-		qDebug() << "SimpleServer.json is readable";
+		//qDebug() << "SimpleServer.json is readable";
 		if (file_simple_server.open(QIODevice::ReadOnly))
 		{
 			qDebug() << "SimpleServer.json open success";

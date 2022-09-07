@@ -20,7 +20,7 @@
       "Controller": "/login",
       "Method": "POST",
       "Parameters": "UserName, Password",
-      "SQLString": "call test.sp_TestLogin"
+      "SQLString": "call test.sp_TestLogin {0}, {1}"
     },
     {
       "Controller": "/logout",
@@ -33,8 +33,12 @@
     },
     {
       "Controller": "/captchaImage",
-      "Method": "GET",
-      "Response": "..\\Resource\\YQRC.png"
+      "Method": "POST",
+      "data": {
+        "GUID": null,
+        "Resource": "..\\Resource\\17.gif"
+      },
+      "Response": "captchaEnabled:true,img:{Resource},uuid:{GUID}"
     },
     {
       "Controller": "/api/user/login",
