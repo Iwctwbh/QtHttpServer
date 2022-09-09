@@ -33,12 +33,16 @@
     },
     {
       "Controller": "/captchaImage",
-      "Method": "POST",
+      "Method": "GET",
       "data": {
         "GUID": null,
         "Resource": "..\\Resource\\17.gif"
       },
-      "Response": "captchaEnabled:true,img:{Resource},uuid:{GUID}"
+      "Response": {
+        "captchaEnabled": true,
+        "img": "{Resource}",
+        "uuid": "{GUID}"
+      }
     },
     {
       "Controller": "/api/user/login",

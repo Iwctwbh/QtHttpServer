@@ -14,10 +14,11 @@ void SimpleServers::InsertSimpleServer(const QByteArray &arg_bytearray_controlle
 									   const QByteArray &arg_bytearray_method,
 									   const QList<QByteArray> &arg_list_parameters,
 									   const QByteArray &arg_bytearray_sql,
-									   const QByteArray &arg_bytearray_response)
+									   const QJsonObject &arg_json_object_data,
+									   const QJsonObject &arg_bytearray_response)
 {
 	//QByteArray QByteArray_MD5_Temp = QCryptographicHash::hash(*QByteArray_controller_Temp, QCryptographicHash::Md5).toHex();
-	const SimpleServer simple_servers{ arg_bytearray_method, arg_list_parameters, arg_bytearray_sql, arg_bytearray_response };
+	const SimpleServer simple_servers{ arg_bytearray_method, arg_list_parameters, arg_bytearray_sql, arg_json_object_data, arg_bytearray_response };
 	if (!map_simple_servers_.contains(arg_bytearray_controller))
 	{
 		map_simple_servers_.insert(arg_bytearray_controller, simple_servers);
@@ -39,28 +40,30 @@ void SimpleServers::InitSimpleServersFromJson(const QJsonArray &arg_json_array)
 
 	std::ranges::for_each(arg_json_array, [this](const QJsonValue &temp_json_value)
 	{
-		QJsonObject json_object = temp_json_value.toObject();
+		QJsonObject temp_json_object = temp_json_value.toObject();
 
-		const QByteArray bytearray_controller{ json_object.take("Controller").toString().toLocal8Bit() };
+		const QByteArray bytearray_controller{ temp_json_object.take("Controller").toString().toLocal8Bit() };
 
 		QList<QByteArray> list_parameters{};
 
-		Q_FOREACH(const QString & temp_string, json_object.take("Parameters").toString().split(','))
+		foreach(const QString & temp_string, temp_json_object.take("Parameters").toString().split(','))
 		{
 			list_parameters.emplace_back(temp_string.trimmed().toLocal8Bit());
 		}
 
-		const QByteArray bytearray_sql{ json_object.take("SQLString").toString().toLocal8Bit() };
+		const QByteArray bytearray_sql{ temp_json_object.take("SQLString").toString().toLocal8Bit() };
 
-		const QByteArray bytearray_method{ json_object.take("Method").toString().toLocal8Bit() };
+		const QByteArray bytearray_method{ temp_json_object.take("Method").toString().toLocal8Bit() };
 
-		const QByteArray bytearray_response{ json_object.take("Response").toString().toLocal8Bit() };
+		const QJsonObject json_object_data{ temp_json_object.value("data").toObject() };
 
-		InsertSimpleServer(bytearray_controller, bytearray_method, list_parameters, bytearray_sql, bytearray_response);
+		const QJsonObject json_object_response{ temp_json_object.take("Response").toObject() };
+
+		InsertSimpleServer(bytearray_controller, bytearray_method, list_parameters, bytearray_sql, json_object_data, json_object_response);
 	});
 }
 
-QMap<QByteArray, SimpleServers::SimpleServer> &SimpleServers::GetSimpleServersMap()
+QHash<QByteArray, SimpleServers::SimpleServer> &SimpleServers::GetSimpleServersMap()
 {
 	return map_simple_servers_;
 }
@@ -89,10 +92,10 @@ void SimpleServers::Run()
 								  json_object_mysql.value("Password").toString(),
 								  "db_connect");*/
 
-				if (const QJsonDocument json_document_simple_server{ QJsonDocument{json_object_simple_server.value("SimpleServers").toArray()} }; json_document_simple_server.array().count() > 0)
+				if (const QJsonDocument json_document_simple_server{ json_object_simple_server.value("SimpleServers").toArray() }; json_document_simple_server.array().count() > 0)
 				{
 					qDebug() << "SimpleServers JsonArray is correct";
-					const QJsonArray json_array_simple_server{ QJsonArray{json_document_simple_server.array()} };
+					const QJsonArray json_array_simple_server{ json_document_simple_server.array() };
 					uint_http_server_port_ = json_object_simple_server.value("HttpServerPort").toString().toUInt();
 					bytearray_http_server_ip_address_ = json_object_simple_server.value("HttpServerIpAddress").toString().toLocal8Bit();
 					unit_http_server_log_level_ = json_object_simple_server.value("HttpServerLogLevel").toString().toUInt();
@@ -108,6 +111,7 @@ void SimpleServers::Run()
 					crow::logger::setHandler(&handler_log_helper);
 
 					crow::App<SimpleServerMiddleware> simple_app_crow{};
+
 					std::ranges::for_each(map_simple_servers_.keys(), [this, &simple_app_crow](const QByteArray &temp_bytearray_key)
 					{
 						const QString string_method = map_simple_servers_.value(temp_bytearray_key).method;
@@ -119,23 +123,28 @@ void SimpleServers::Run()
 						simple_app_crow.route_dynamic(static_cast<std::string>(temp_bytearray_key)).methods(static_cast<crow::HTTPMethod>(int_index_vector_method_strings))([this](const crow::request &request_request)
 						{
 							//return static_cast<std::string>(R"({"data":")" + QDir::currentPath().toLocal8Bit() + "---" + QCoreApplication::applicationDirPath().toLocal8Bit() + R"("})");
-							if (const QByteArray bytearray_response{ map_simple_servers_.value(request_request.url.data()).bytearray_response }; bytearray_response != "")
+							if (const QJsonObject json_object_response{ map_simple_servers_.value(request_request.url.data()).json_object_response }; !json_object_response.isEmpty())
 							{
-								if (const QFile temp_file{ bytearray_response }; temp_file.exists())
+								std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request](const auto &temp_bytearray_key)
 								{
-									if (const QMimeType temp_mimetype{ QMimeDatabase{}.mimeTypeForFile(bytearray_response) }; temp_mimetype.name().startsWith("image/"))
+									const QByteArray temp_byte_array = json_object_response.value(temp_bytearray_key).toString().toLocal8Bit();
+									const QRegularExpression regexp{ R"({(\w+)})" };
+									/*for (const QRegularExpressionMatch &temp_regex_match : regexp.globalMatch(temp_byte_array))
 									{
-										return static_cast <std::string>(R"({"data":")" + QtCommonTools::ConvertImgToBase64(bytearray_response) + R"("})");
-									}
-									return static_cast <std::string>(R"({"data":")" + bytearray_response + R"("})");
-								}
-								else
-								{
-									return static_cast <std::string>(R"({"data":")" + bytearray_response + R"("})");
-								}
+										QByteArray bytearray_data = map_simple_servers_.value(request_request.url.data()).json_object_data.value(temp_regex_match.captured()).toString().toLocal8Bit();
+
+										if (const QFile temp_file{ bytearray_data }; temp_file.exists())
+										{
+											if (const QMimeType temp_mimetype{ QMimeDatabase{}.mimeTypeForFile(bytearray_data) }; temp_mimetype.name().startsWith("image/"))
+											{
+												return static_cast <std::string>(R"({"data":")" + QtCommonTools::ConvertImgToBase64(bytearray_data) + R"("})");
+											}
+											return static_cast <std::string>(R"({"data":")" + bytearray_data + R"("})");
+										}
+									}*/
+								});
 							}
-							auto a = method_name(request_request.method);
-							const QString string_temp = R"({"method":")" + QString::fromLocal8Bit(a) + R"("})";
+							const QString string_temp = R"({"method":")" + QString::fromLocal8Bit(method_name(request_request.method)) + R"("})";
 							return static_cast<std::string>(string_temp.toLocal8Bit());
 						});
 					});

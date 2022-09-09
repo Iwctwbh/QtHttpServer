@@ -14,13 +14,15 @@ class SimpleServers final : public QObject
 	Q_OBJECT
 public:
 	explicit SimpleServers(QObject *parent = nullptr);
+
 	struct SimpleServer
 	{
 		//QByteArray *controller;
 		QByteArray method{};
 		QList<QByteArray> list_parameters{};
 		QByteArray bytearray_sql{};
-		QByteArray bytearray_response{};
+		QJsonObject json_object_data{};
+		QJsonObject json_object_response{};
 	};
 
 	static std::vector<QByteArray> GetVectorMethodStrings()
@@ -63,10 +65,11 @@ public:
 							const QByteArray &arg_bytearray_method,
 							const QList<QByteArray> &arg_list_parameters,
 							const QByteArray &arg_bytearray_sql,
-							const QByteArray &arg_bytearray_response);
+							const QJsonObject &arg_json_object_data,
+							const QJsonObject &arg_bytearray_response);
 	static void EraseSimpleServer();
 	void InitSimpleServersFromJson(const QJsonArray &arg_json_array);
-	QMap<QByteArray, SimpleServer> &GetSimpleServersMap();
+	QHash<QByteArray, SimpleServer> &GetSimpleServersMap();
 	void Run();
 
 	void emit_run();
@@ -75,7 +78,7 @@ signals:
 	void signal_run();
 
 private:
-	QMap<QByteArray, SimpleServer> map_simple_servers_{};
+	QHash<QByteArray, SimpleServer> map_simple_servers_{};
 	LogHelperHandler handler_log_helper_{};
 	QByteArray bytearray_http_server_ip_address_{};
 	uint16_t uint_http_server_port_{};
