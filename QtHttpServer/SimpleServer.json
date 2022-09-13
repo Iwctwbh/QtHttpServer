@@ -2,8 +2,10 @@
   "WebController": {
     "WebServer": true,
     "WebServerController": "/vueWebServer",
-    "UserName": "admin",
-    "Password": "admintest"
+    "Login": {
+      "username": "admin",
+      "password": "admin123"
+    }
   },
   "HttpServerIpAddress": "[::1]",
   "HttpServerPort": "8080",

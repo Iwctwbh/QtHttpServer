@@ -154,12 +154,28 @@ void SimpleServers::Run()
 
 					if (json_object_simple_server.contains("WebController") && json_object_simple_server.value("WebController").isObject())
 					{
-						if (const QJsonObject json_object_web_controller{ json_object_simple_server.value("WebController").toObject() }; json_object_web_controller.value("WebServer").toString().compare("true"))
+						if (json_object_web_controller_ = json_object_simple_server.value("WebController").toObject(); json_object_web_controller_.value("WebServer") == true)
 						{
-							simple_app_crow.route_dynamic(static_cast<std::string>(json_object_web_controller.value("WebServerController").toString().toLocal8Bit())).methods(crow::HTTPMethod::POST)([this](const crow::request &request_request)
+							simple_app_crow.route_dynamic(static_cast<std::string>(json_object_web_controller_.value("WebServerController").toString().toLocal8Bit())).methods(crow::HTTPMethod::POST)([this](const crow::request &request_request)
 							{
-								const QString string_temp = R"({"method":")" + QString::fromLocal8Bit(method_name(request_request.method)) + R"("})";
-								return static_cast<std::string>(string_temp.toLocal8Bit());
+								const QJsonObject json_object_body{ QJsonDocument::fromJson(request_request.body.data()).object() };
+								bool flag_can_login{true};
+								const QJsonObject json_object_login{ json_object_web_controller_.value("Login").toObject() };
+								std::ranges::for_each(json_object_login.keys(), [&json_object_login, &json_object_body, &flag_can_login](const QString &temp_login_key)
+								{
+									if (json_object_login.value(temp_login_key).toString() != json_object_body.value(temp_login_key).toString())
+									{
+										flag_can_login = false;
+									}
+								});
+								if (flag_can_login)
+								{
+									return crow::response(200);
+								}
+								else
+								{
+									return crow::response(404);
+								}
 							});
 						}
 					}

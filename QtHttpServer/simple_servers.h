@@ -79,6 +79,7 @@ signals:
 
 private:
 	QHash<QByteArray, SimpleServer> map_simple_servers_{};
+	QJsonObject json_object_web_controller_{};
 	LogHelperHandler handler_log_helper_{};
 	QByteArray bytearray_http_server_ip_address_{};
 	uint16_t uint_http_server_port_{};
