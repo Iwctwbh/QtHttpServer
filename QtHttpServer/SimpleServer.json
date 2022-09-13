@@ -5,7 +5,7 @@
     "UserName": "admin",
     "Password": "admintest"
   },
-  "HttpServerIpAddress": "[::1]",
+  "HttpServerIpAddress": "10.11.12.6",
   "HttpServerPort": "8080",
   "HttpServerLogLevel": "1",
   "MySQL": {

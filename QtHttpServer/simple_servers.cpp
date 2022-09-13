@@ -123,26 +123,32 @@ void SimpleServers::Run()
 						simple_app_crow.route_dynamic(static_cast<std::string>(temp_bytearray_key)).methods(static_cast<crow::HTTPMethod>(int_index_vector_method_strings))([this](const crow::request &request_request)
 						{
 							//return static_cast<std::string>(R"({"data":")" + QDir::currentPath().toLocal8Bit() + "---" + QCoreApplication::applicationDirPath().toLocal8Bit() + R"("})");
-							if (const QJsonObject json_object_response{ map_simple_servers_.value(request_request.url.data()).json_object_response }; !json_object_response.isEmpty())
+							if (QJsonObject json_object_response{ map_simple_servers_.value(request_request.url.data()).json_object_response }; !json_object_response.isEmpty())
 							{
-								std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request](const auto &temp_bytearray_key)
+								std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request](const QString &temp_bytearray_key)
 								{
 									const QByteArray temp_byte_array = json_object_response.value(temp_bytearray_key).toString().toLocal8Bit();
 									const QRegularExpression regexp{ R"({(\w+)})" };
-									/*for (const QRegularExpressionMatch &temp_regex_match : regexp.globalMatch(temp_byte_array))
+									for (const QRegularExpressionMatch &temp_regex_match : regexp.globalMatch(temp_byte_array))
 									{
-										QByteArray bytearray_data = map_simple_servers_.value(request_request.url.data()).json_object_data.value(temp_regex_match.captured()).toString().toLocal8Bit();
+										auto a = map_simple_servers_.value(request_request.url.data());
+										auto b = temp_regex_match.captured(1);
+										auto c = a.json_object_data.value(b);
+										QByteArray bytearray_data = map_simple_servers_.value(request_request.url.data()).json_object_data.value(temp_regex_match.captured(1)).toString().toLocal8Bit();
 
 										if (const QFile temp_file{ bytearray_data }; temp_file.exists())
 										{
 											if (const QMimeType temp_mimetype{ QMimeDatabase{}.mimeTypeForFile(bytearray_data) }; temp_mimetype.name().startsWith("image/"))
 											{
-												return static_cast <std::string>(R"({"data":")" + QtCommonTools::ConvertImgToBase64(bytearray_data) + R"("})");
+												json_object_response.insert(temp_bytearray_key, QtCommonTools::ConvertImgToBase64(bytearray_data).data());
+												//return static_cast <std::string>(R"({"data":")" + QtCommonTools::ConvertImgToBase64(bytearray_data) + R"("})");
 											}
-											return static_cast <std::string>(R"({"data":")" + bytearray_data + R"("})");
+											//return static_cast <std::string>(R"({"data":")" + bytearray_data + R"("})");
 										}
-									}*/
+									}
 								});
+
+								return static_cast<std::string>(QJsonDocument{ json_object_response }.toJson());
 							}
 							const QString string_temp = R"({"method":")" + QString::fromLocal8Bit(method_name(request_request.method)) + R"("})";
 							return static_cast<std::string>(string_temp.toLocal8Bit());
