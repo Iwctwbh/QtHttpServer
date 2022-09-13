@@ -1,11 +1,11 @@
 {
   "WebController": {
     "WebServer": true,
-    "WebServerName": "vueWebServer",
+    "WebServerController": "/vueWebServer",
     "UserName": "admin",
     "Password": "admintest"
   },
-  "HttpServerIpAddress": "10.11.12.6",
+  "HttpServerIpAddress": "[::1]",
   "HttpServerPort": "8080",
   "HttpServerLogLevel": "1",
   "MySQL": {
@@ -33,7 +33,7 @@
     },
     {
       "Controller": "/captchaImage",
-      "Method": "GET",
+      "Method": "POST",
       "data": {
         "GUID": null,
         "Resource": "..\\Resource\\17.gif"

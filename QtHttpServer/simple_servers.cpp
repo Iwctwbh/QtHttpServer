@@ -114,7 +114,7 @@ void SimpleServers::Run()
 
 					std::ranges::for_each(map_simple_servers_.keys(), [this, &simple_app_crow](const QByteArray &temp_bytearray_key)
 					{
-						const QString string_method = map_simple_servers_.value(temp_bytearray_key).method;
+						const QByteArray string_method = map_simple_servers_.value(temp_bytearray_key).method;
 						const std::vector<QByteArray> vector_method_strings{ GetVectorMethodStrings() };
 						const auto iterator_vector_method_strings =
 							std::ranges::find(vector_method_strings, string_method);
@@ -122,7 +122,6 @@ void SimpleServers::Run()
 							vector_method_strings.begin(), iterator_vector_method_strings);
 						simple_app_crow.route_dynamic(static_cast<std::string>(temp_bytearray_key)).methods(static_cast<crow::HTTPMethod>(int_index_vector_method_strings))([this](const crow::request &request_request)
 						{
-							//return static_cast<std::string>(R"({"data":")" + QDir::currentPath().toLocal8Bit() + "---" + QCoreApplication::applicationDirPath().toLocal8Bit() + R"("})");
 							if (QJsonObject json_object_response{ map_simple_servers_.value(request_request.url.data()).json_object_response }; !json_object_response.isEmpty())
 							{
 								std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request](const QString &temp_bytearray_key)
@@ -141,9 +140,7 @@ void SimpleServers::Run()
 											if (const QMimeType temp_mimetype{ QMimeDatabase{}.mimeTypeForFile(bytearray_data) }; temp_mimetype.name().startsWith("image/"))
 											{
 												json_object_response.insert(temp_bytearray_key, QtCommonTools::ConvertImgToBase64(bytearray_data).data());
-												//return static_cast <std::string>(R"({"data":")" + QtCommonTools::ConvertImgToBase64(bytearray_data) + R"("})");
 											}
-											//return static_cast <std::string>(R"({"data":")" + bytearray_data + R"("})");
 										}
 									}
 								});
@@ -154,6 +151,23 @@ void SimpleServers::Run()
 							return static_cast<std::string>(string_temp.toLocal8Bit());
 						});
 					});
+
+					if (json_object_simple_server.contains("WebController") && json_object_simple_server.value("WebController").isObject())
+					{
+						if (const QJsonObject json_object_web_controller{ json_object_simple_server.value("WebController").toObject() }; json_object_web_controller.value("WebServer").toString().compare("true"))
+						{
+							simple_app_crow.route_dynamic(static_cast<std::string>(json_object_web_controller.value("WebServerController").toString().toLocal8Bit())).methods(crow::HTTPMethod::POST)([this](const crow::request &request_request)
+							{
+								const QString string_temp = R"({"method":")" + QString::fromLocal8Bit(method_name(request_request.method)) + R"("})";
+								return static_cast<std::string>(string_temp.toLocal8Bit());
+							});
+						}
+					}
+					else
+					{
+						qDebug() << "No Web Controller";
+					}
+
 					simple_app_crow.loglevel(static_cast<crow::LogLevel>(unit_http_server_log_level_));
 					auto sync_app_crow = simple_app_crow.bindaddr(static_cast<std::string>(bytearray_http_server_ip_address_)).port(uint_http_server_port_).multithreaded().run_async();
 
