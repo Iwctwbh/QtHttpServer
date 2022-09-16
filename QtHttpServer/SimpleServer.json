@@ -1,56 +1,66 @@
 {
   "WebController": {
     "WebServer": true,
-    "WebServerController": "/vueWebServer",
+    "WebServerController": "vueWebServer",
     "Login": {
       "username": "admin",
       "password": "admin123"
     }
   },
-  "HttpServerIpAddress": "[::1]",
-  "HttpServerPort": "8080",
-  "HttpServerLogLevel": "1",
-  "MySQL": {
-    "Host": "127.0.0.1",
-    "Port": "3306",
-    "UserName": "Test",
-    "Password": "AJK8d9sfjc90sd8f9cxSJD@09^8d#N*&DFDJDNDaJJJdsf090905",
-    "DataBase": "Test"
+  "SQL": {
+    "MySQL": {
+      "Host": "127.0.0.1",
+      "Port": "3306",
+      "UserName": "Test",
+      "Password": "AJK8d9sfjc90sd8f9cxSJD@09^8d#N*&DFDJDNDaJJJdsf090905",
+      "DataBase": "Test"
+    },
+    "SQLite": {
+      "DBFilePath": "..\\SimpleServers.db"
+    }
   },
-  "SimpleServers": [
-    {
-      "Controller": "/login",
-      "Method": "POST",
-      "Parameters": "UserName, Password",
-      "SQLString": "call test.sp_TestLogin {0}, {1}"
-    },
-    {
-      "Controller": "/logout",
-      "Method": "POST"
-    },
-    {
-      "Controller": "/getInfo",
-      "Method": "POST",
-      "Response": "2333"
-    },
-    {
-      "Controller": "/captchaImage",
-      "Method": "POST",
-      "data": {
-        "GUID": null,
-        "Resource": "..\\Resource\\17.gif"
-      },
-      "Response": {
-        "captchaEnabled": true,
-        "img": "{Resource}",
-        "uuid": "{GUID}"
+  "HttpServer": {
+    "Default": {
+      "HttpServerIpAddress": "[::1]",
+      "HttpServerPort": "8080",
+      "HttpServerLogLevel": "1",
+      "SimpleServers": {
+        "/login": {
+          "Method": "POST",
+          "SQL": "MySQL",
+          "Parameters": "UserName, Password",
+          "SqlQuery": "call test.sp_TestLogin {0}, {1}"
+        }
       }
     },
-    {
-      "Controller": "/api/user/login",
-      "Methos": "POST",
-      "Parameters": "eamil, password",
-      "SQLString": "call test.sp_TestLogin"
+    "vueWebServer": {
+      "HttpServerIpAddress": "[::1]",
+      "HttpServerPort": "18080",
+      "HttpServerLogLevel": "1",
+      "SimpleServers": {
+        "/captchaImage": {
+          "Method": "POST",
+          "data": {
+            "GUID": null,
+            "Resource": "..\\Resource\\17.gif"
+          },
+          "/login": {
+            "Method": "POST",
+            "Parameters": {
+              "UserName": null,
+              "Password": "{MD5}"
+            },
+            "SQL": "SQLite",
+            "SqlQuery": "SELECT count(*) AS RESULT FROM tblSimpleServers WHERE UserName = {UserName} AND Password = {Password}",
+            "data": {
+              "result": "{SqlResult}"
+            },
+            "Response": {
+              "result": "{result}"
+            }
+          }
+        }
+      }
     }
-  ]
+  }
 }
