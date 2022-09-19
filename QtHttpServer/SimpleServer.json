@@ -44,20 +44,23 @@
             "GUID": null,
             "Resource": "..\\Resource\\17.gif"
           },
-          "/login": {
-            "Method": "POST",
-            "Parameters": {
-              "UserName": null,
-              "Password": "{MD5}"
-            },
-            "SQL": "SQLite",
-            "SqlQuery": "SELECT count(*) AS RESULT FROM tblSimpleServers WHERE UserName = {UserName} AND Password = {Password}",
-            "data": {
-              "result": "{SqlResult}"
-            },
-            "Response": {
-              "result": "{result}"
-            }
+          "Response": {
+            "image": "{Resource}"
+          }
+        },
+        "/login": {
+          "Method": "POST",
+          "Parameters": {
+            "UserName": null,
+            "Password": "{MD5}"
+          },
+          "SQL": "SQLite",
+          "SqlQuery": "SELECT count(*) AS RESULT FROM tblSimpleServers WHERE UserName = {UserName} AND Password = {Password}",
+          "data": {
+            "result": "{SqlResult}"
+          },
+          "Response": {
+            "result": "{result}"
           }
         }
       }

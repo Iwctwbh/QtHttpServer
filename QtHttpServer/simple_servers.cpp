@@ -21,7 +21,7 @@ void SimpleServers::Run() const
 
 	//CROW_CATCHALL_ROUTE(simple_app_crow);
 	QJsonObject json_object_controllers{ json_object_simple_server.value("Controllers").toObject() };
-	simple_app_crow.route_dynamic("/")([this, &json_object_controllers](const crow::request &request_request)
+	simple_app_crow.catchall_route()([this, &json_object_controllers](const crow::request &request_request)
 	{
 		crow::response response_response{};
 		if (!json_object_controllers.contains(request_request.url.data()))
@@ -29,27 +29,29 @@ void SimpleServers::Run() const
 			response_response.code = 404;
 		}
 		else {
-
-			if (!json_object_controllers.contains("Response"))
+			const QJsonObject json_object_controller{ json_object_controllers.value(request_request.url.data()).toObject() };
+			qDebug() << json_object_controller;
+			qDebug() << json_object_controller.value("Response");
+			if (!json_object_controller.contains("Response"))
 			{
 				response_response.code = 200;
 			}
 			else
 			{
-				QJsonObject json_object_response{ json_object_controllers.value("Response").toObject() };
+				QJsonObject json_object_response{ json_object_controller.value("Response").toObject() };
 				if (json_object_response.isEmpty())
 				{
 					response_response.code = 200;
 				}
 				else
 				{
-					std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request, &json_object_controllers](const QString &temp_bytearray_key)
+					std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request, &json_object_controller](const QString &temp_bytearray_key)
 					{
 						const QByteArray temp_byte_array = json_object_response.value(temp_bytearray_key).toString().toLocal8Bit();
 						const QRegularExpression regexp{ R"({(\w+)})" };
 						for (const QRegularExpressionMatch &temp_regex_match : regexp.globalMatch(temp_byte_array))
 						{
-							QByteArray bytearray_data = json_object_controllers.value("data").toObject().value(temp_regex_match.captured(1)).toString().toLocal8Bit();
+							QByteArray bytearray_data = json_object_controller.value("data").toObject().value(temp_regex_match.captured(1)).toString().toLocal8Bit();
 
 							if (const QFile temp_file{ bytearray_data }; temp_file.exists())
 							{
