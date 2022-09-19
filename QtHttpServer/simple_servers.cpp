@@ -28,42 +28,49 @@ void SimpleServers::Run() const
 		{
 			response_response.code = 404;
 		}
-		else {
+		else
+		{
 			const QJsonObject json_object_controller{ json_object_controllers.value(request_request.url.data()).toObject() };
-			qDebug() << json_object_controller;
-			qDebug() << json_object_controller.value("Response");
-			if (!json_object_controller.contains("Response"))
+
+			if(!json_object_controller.value("Method").toString().toUpper().replace(" ", "").split(',').contains(crow::method_name(request_request.method).data()))
 			{
-				response_response.code = 200;
+				response_response.code = 404;
 			}
 			else
 			{
-				QJsonObject json_object_response{ json_object_controller.value("Response").toObject() };
-				if (json_object_response.isEmpty())
+				if (!json_object_controller.contains("Response"))
 				{
 					response_response.code = 200;
 				}
 				else
 				{
-					std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request, &json_object_controller](const QString &temp_bytearray_key)
+					QJsonObject json_object_response{ json_object_controller.value("Response").toObject() };
+					if (json_object_response.isEmpty())
 					{
-						const QByteArray temp_byte_array = json_object_response.value(temp_bytearray_key).toString().toLocal8Bit();
-						const QRegularExpression regexp{ R"({(\w+)})" };
-						for (const QRegularExpressionMatch &temp_regex_match : regexp.globalMatch(temp_byte_array))
+						response_response.code = 200;
+					}
+					else
+					{
+						std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request, &json_object_controller](const QString &temp_bytearray_key)
 						{
-							QByteArray bytearray_data = json_object_controller.value("data").toObject().value(temp_regex_match.captured(1)).toString().toLocal8Bit();
-
-							if (const QFile temp_file{ bytearray_data }; temp_file.exists())
+							const QByteArray temp_byte_array = json_object_response.value(temp_bytearray_key).toString().toLocal8Bit();
+							const QRegularExpression regexp{ R"({(\w+)})" };
+							for (const QRegularExpressionMatch &temp_regex_match : regexp.globalMatch(temp_byte_array))
 							{
-								if (const QMimeType temp_mimetype{ QMimeDatabase{}.mimeTypeForFile(bytearray_data) }; temp_mimetype.name().startsWith("image/"))
+								QByteArray bytearray_data = json_object_controller.value("data").toObject().value(temp_regex_match.captured(1)).toString().toLocal8Bit();
+
+								if (const QFile temp_file{ bytearray_data }; temp_file.exists())
 								{
-									json_object_response.insert(temp_bytearray_key, QtCommonTools::ConvertImgToBase64(bytearray_data).data());
+									if (const QMimeType temp_mimetype{ QMimeDatabase{}.mimeTypeForFile(bytearray_data) }; temp_mimetype.name().startsWith("image/"))
+									{
+										json_object_response.insert(temp_bytearray_key, QtCommonTools::ConvertImgToBase64(bytearray_data).data());
+									}
 								}
 							}
-						}
-					});
+						});
+					}
+					response_response.body = static_cast<std::string>(QJsonDocument{ json_object_response }.toJson());
 				}
-				response_response.body = static_cast<std::string>(QJsonDocument{ json_object_response }.toJson());
 			}
 		}
 		return response_response;

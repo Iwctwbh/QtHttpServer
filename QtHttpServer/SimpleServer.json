@@ -39,9 +39,9 @@
       "SimpleServerLogLevel": "1",
       "Controllers": {
         "/captchaImage": {
-          "Method": "POST",
+          "Method": "POST,GET",
           "data": {
-            "GUID": null,
+            "GUID": "{GUID}",
             "Resource": "..\\Resource\\17.gif"
           },
           "Response": {
