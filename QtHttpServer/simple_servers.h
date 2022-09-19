@@ -59,18 +59,9 @@ public:
 			//CROW_LOG_DEBUG << " - END";
 		}
 	};
-
-	void InitSimpleServers();
-	void InsertSimpleServer(const QByteArray &arg_bytearray_controller,
-							const QByteArray &arg_bytearray_method,
-							const QList<QByteArray> &arg_list_parameters,
-							const QByteArray &arg_bytearray_sql,
-							const QJsonObject &arg_json_object_data,
-							const QJsonObject &arg_bytearray_response);
-	static void EraseSimpleServer();
-	void InitSimpleServersFromJson(const QJsonArray &arg_json_array);
-	QHash<QByteArray, SimpleServer> &GetSimpleServersMap();
-	void Run();
+	
+	void InitSimpleServers(const QJsonObject &arg_json_object);
+	void Run() const;
 
 	void emit_run();
 
@@ -78,12 +69,7 @@ signals:
 	void signal_run();
 
 private:
-	QHash<QByteArray, SimpleServer> map_simple_servers_{};
-	QJsonObject json_object_web_controller_{};
-	LogHelperHandler handler_log_helper_{};
-	QByteArray bytearray_http_server_ip_address_{};
-	uint16_t uint_http_server_port_{};
-	uint16_t unit_http_server_log_level_{};
+	QJsonObject json_object_simple_server_{};
 };
 
 #endif // SIMPLE_SERVERS_H

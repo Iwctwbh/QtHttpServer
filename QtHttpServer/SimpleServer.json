@@ -19,12 +19,12 @@
       "DBFilePath": "..\\SimpleServers.db"
     }
   },
-  "HttpServer": {
+  "SimpleServers": {
     "Default": {
-      "HttpServerIpAddress": "[::1]",
-      "HttpServerPort": "8080",
-      "HttpServerLogLevel": "1",
-      "SimpleServers": {
+      "SimpleServerIpAddress": "[::1]",
+      "SimpleServerPort": "8080",
+      "SimpleServerLogLevel": "1",
+      "Controllers": {
         "/login": {
           "Method": "POST",
           "SQL": "MySQL",
@@ -34,10 +34,10 @@
       }
     },
     "vueWebServer": {
-      "HttpServerIpAddress": "[::1]",
-      "HttpServerPort": "18080",
-      "HttpServerLogLevel": "1",
-      "SimpleServers": {
+      "SimpleServerIpAddress": "[::1]",
+      "SimpleServerPort": "18080",
+      "SimpleServerLogLevel": "1",
+      "Controllers": {
         "/captchaImage": {
           "Method": "POST",
           "data": {

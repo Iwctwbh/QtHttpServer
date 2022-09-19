@@ -27,6 +27,6 @@ public:
 				prefix = "CRITICAL";
 				break;
 		}
-		std::cerr << "(" << static_cast<std::string>(QDateTime::currentDateTime().toString().toLocal8Bit()) << ") [" << prefix << "] " << message << std::endl;
+		std::cerr << "(" + static_cast<std::string>(QDateTime::currentDateTime().toString().toLocal8Bit()) + ") [" + prefix + "] " + message + "\r\n";
 	}
 };
