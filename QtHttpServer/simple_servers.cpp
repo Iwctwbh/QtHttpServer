@@ -30,9 +30,7 @@ void SimpleServers::Run() const
 		}
 		else
 		{
-			const QJsonObject json_object_controller{ json_object_controllers.value(request_request.url.data()).toObject() };
-
-			if(!json_object_controller.value("Method").toString().toUpper().replace(" ", "").split(',').contains(crow::method_name(request_request.method).data()))
+			if (const QJsonObject json_object_controller{ json_object_controllers.value(request_request.url.data()).toObject() }; !json_object_controller.value("Methods").toString().toUpper().replace(" ", "").split(',').contains(crow::method_name(request_request.method).data()))
 			{
 				response_response.code = 404;
 			}
@@ -65,6 +63,12 @@ void SimpleServers::Run() const
 									{
 										json_object_response.insert(temp_bytearray_key, QtCommonTools::ConvertImgToBase64(bytearray_data).data());
 									}
+								}
+								else if (bytearray_data == "{GUID}")
+								{
+									QUuid uuid_id = QUuid::createUuid();
+									QString string_base_data{ request_request.remote_ip_address.data() };
+									json_object_response.insert(temp_bytearray_key, QUuid::createUuidV5(uuid_id, string_base_data).toString());
 								}
 							}
 						});

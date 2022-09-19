@@ -39,13 +39,14 @@
       "SimpleServerLogLevel": "1",
       "Controllers": {
         "/captchaImage": {
-          "Method": "POST,GET",
+          "Methods": "POST, GET",
           "data": {
             "GUID": "{GUID}",
             "Resource": "..\\Resource\\17.gif"
           },
           "Response": {
-            "image": "{Resource}"
+            "image": "{Resource}",
+            "UUID": "{GUID}"
           }
         },
         "/login": {

@@ -25,7 +25,7 @@ public:
 		QJsonObject json_object_response{};
 	};
 
-	static std::vector<QByteArray> GetVectorMethodStrings()
+	/*static std::vector<QByteArray> GetVectorMethodStrings()
 	{
 		std::vector<QByteArray> list_method_strings{};
 		std::ranges::for_each(crow::method_strings, [&](const char *temp_ptr_char)
@@ -33,7 +33,7 @@ public:
 			list_method_strings.emplace_back(temp_ptr_char);
 		});
 		return list_method_strings;
-	}
+	}*/
 
 	struct SimpleServerMiddleware : crow::ILocalMiddleware
 	{
