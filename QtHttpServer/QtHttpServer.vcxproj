@@ -61,6 +61,20 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>true</VcpkgEnabled>
+    <VcpkgEnableManifest>false</VcpkgEnableManifest>
+    <VcpkgManifestInstall>true</VcpkgManifestInstall>
+    <VcpkgAutoLink>true</VcpkgAutoLink>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <VcpkgUseStatic>false</VcpkgUseStatic>
+    <VcpkgConfiguration>Debug</VcpkgConfiguration>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <VcpkgUseStatic>false</VcpkgUseStatic>
+    <VcpkgConfiguration>Release</VcpkgConfiguration>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
