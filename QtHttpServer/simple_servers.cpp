@@ -51,9 +51,8 @@ void SimpleServers::Run() const
 					{
 						std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request, &json_object_controller](const QString &temp_bytearray_key)
 						{
-							const QByteArray temp_byte_array = json_object_response.value(temp_bytearray_key).toString().toLocal8Bit();
-							const QRegularExpression regexp{ R"({(\w+)})" };
-							for (const QRegularExpressionMatch &temp_regex_match : regexp.globalMatch(temp_byte_array))
+							QString temp_string_value = json_object_response.value(temp_bytearray_key).toString();
+							for (const QRegularExpression regexp{ R"({(\w+)})" }; const QRegularExpressionMatch &temp_regex_match : regexp.globalMatch(temp_string_value))
 							{
 								QByteArray bytearray_data = json_object_controller.value("data").toObject().value(temp_regex_match.captured(1)).toString().toLocal8Bit();
 
@@ -61,16 +60,17 @@ void SimpleServers::Run() const
 								{
 									if (const QMimeType temp_mimetype{ QMimeDatabase{}.mimeTypeForFile(bytearray_data) }; temp_mimetype.name().startsWith("image/"))
 									{
-										json_object_response.insert(temp_bytearray_key, QtCommonTools::ConvertImgToBase64(bytearray_data).data());
+										temp_string_value.replace(temp_regex_match.captured(), QtCommonTools::ConvertImgToBase64(bytearray_data));
 									}
 								}
-								else if (bytearray_data == "{GUID}")
+								else if (!bytearray_data.compare("{GUID}") || !bytearray_data.compare("{UUID}"))
 								{
-									QUuid uuid_id = QUuid::createUuid();
+									QUuid uuid_uuid = QUuid::createUuid();
 									QString string_base_data{ request_request.remote_ip_address.data() };
-									json_object_response.insert(temp_bytearray_key, QUuid::createUuidV5(uuid_id, string_base_data).toString());
+									temp_string_value.replace(temp_regex_match.captured(), QUuid::createUuidV5(uuid_uuid, string_base_data).toString());
 								}
 							}
+							json_object_response.insert(temp_bytearray_key, QString{ temp_string_value });
 						});
 					}
 					response_response.body = static_cast<std::string>(QJsonDocument{ json_object_response }.toJson());
