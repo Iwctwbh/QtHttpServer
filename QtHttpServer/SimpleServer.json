@@ -44,6 +44,8 @@
             "GUID": "{GUID}",
             "Resource": "..\\Resource\\17.gif"
           },
+          "SQL": "SQLite",
+          "SqlQuery": "Insert {GUID}",
           "Response": {
             "image": "{Resource}",
             "UUID": "{GUID}"
