@@ -1,4 +1,4 @@
-#include "common_tools.h"
+ï»¿#include "common_tools.h"
 
 QByteArray QtCommonTools::ConvertImgToBase64(const QByteArray &string_path)
 {
@@ -14,12 +14,12 @@ QByteArray QtCommonTools::ConvertImgToBase64(const QByteArray &string_path)
 }
 
 
-//»ñÈ¡4Î»Ëæ»úÉú³ÉµÄÍ¼Æ¬ÑéÖ¤Âë
-//Êı×ÖºÍ×ÖÄ¸×éºÏ£¬²»ÖØ¸´¡£
+//è·å–4ä½éšæœºç”Ÿæˆçš„å›¾ç‰‡éªŒè¯ç 
+//æ•°å­—å’Œå­—æ¯ç»„åˆï¼Œä¸é‡å¤ã€‚
 //@return
 void QtCommonTools::MyMerge(cv::Mat src, cv::Mat &dst)
 {
-	for (int i = 0; i < src.rows; i++) { //±éÀúÏñËØµã
+	for (int i = 0; i < src.rows; i++) { //éå†åƒç´ ç‚¹
 		for (int j = 0; j < src.cols; j++)
 		{
 			if (src.at<cv::Vec3b>(i, j)[0] < 255 && src.at<cv::Vec3b>(i, j)[0] >  20) {
@@ -41,7 +41,7 @@ QString QtCommonTools::GetMiCode() const
 	imshow("image1", image);
 
 	std::string fileName = "";
-	//Ôö¼ÓËæ»ú×Ö·û
+	//å¢åŠ éšæœºå­—ç¬¦
 	std::string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	char c = chars[rand() % 36];
 	std::string letterCode;
@@ -69,16 +69,16 @@ QString QtCommonTools::GetMiCode() const
 		int baseline;
 		cv::Size text_size = cv::getTextSize(tempChar, font_face, font_scale, thickness, &baseline);
 		if (origin.y < text_size.height)
-			origin.y = pos_y + rand() % 35; //ÒÔÃâ³¬³ö
+			origin.y = pos_y + rand() % 35; //ä»¥å…è¶…å‡º
 		putText(imageCopy, tempChar, origin, font_face, font_scale, cv::Scalar(rand() % 255, rand() % 255, rand() % 255), thickness, 8, 0);
 		pos_x += 45;
-		cv::Point2f  center(imageCopy.cols / 2, imageCopy.rows / 2);  //¶¨ÒåĞı×ªÖĞĞÄÎªÍ¼ÏñµÄÖĞĞÄ
+		cv::Point2f  center(imageCopy.cols / 2, imageCopy.rows / 2);  //å®šä¹‰æ—‹è½¬ä¸­å¿ƒä¸ºå›¾åƒçš„ä¸­å¿ƒ
 		cv::Mat rotMat = getRotationMatrix2D(center, rand() % 20 - 10, 1);
 		warpAffine(imageCopy, imageCopy, rotMat, imageCopy.size());
 		MyMerge(imageCopy, image);
 	}
 	imshow("image2", image);
-	//Ôö¼ÓËæ»ú×Ö·û¸ÉÈÅ
+	//å¢åŠ éšæœºå­—ç¬¦å¹²æ‰°
 	int char_num = 10;
 	for (int i = 0; i < char_num; i++)
 	{
