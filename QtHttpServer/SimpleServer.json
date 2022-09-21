@@ -42,13 +42,22 @@
           "Methods": "POST, GET",
           "data": {
             "GUID": "{GUID}",
-            "Resource": "..\\Resource\\17.gif"
+            "Resource": "..\\Resource\\17.gif",
+            "CaptchaImage": "{CaptchaImage}",
+            "CaptchaImageResult": "{CaptchaImageResult}",
+            "Captcha": {
+              "{CaptchaImage}": {
+                "image": "{CaptchaImage}",
+                "result": "{CaptchaImageResult}"
+              }
+            }
           },
           "SQL": "SQLite",
-          "SqlQuery": "Insert {GUID}",
+          "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ('{GUID}','{Captcha{result}}')",
           "Response": {
             "image": "{Resource}",
-            "UUID": "{GUID}"
+            "UUID": "{GUID}",
+            "CaptchaImage": "{Captcha{image}}"
           }
         },
         "/login": {

@@ -11,7 +11,7 @@ class CommonTools
 {
 public:
 	static QByteArray ConvertImgToBase64(const QByteArray &string_path);
-	static cv::Mat GetCaptchaImage();
+	static cv::Mat CreateCaptchaImage(std::string *out_string_result = nullptr);
 	static QByteArray ConvertMatToBase64(const cv::Mat &arg_mat_image);
 
 private:

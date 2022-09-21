@@ -52,7 +52,7 @@ void SimpleServers::Run() const
 						std::ranges::for_each(json_object_response.keys(), [this, &json_object_response, &request_request, &json_object_controller](const QString &temp_bytearray_key)
 						{
 							QString temp_string_value = json_object_response.value(temp_bytearray_key).toString();
-							for (const QRegularExpression regexp{ R"({(\w+)})" }; const QRegularExpressionMatch &temp_regex_match : regexp.globalMatch(temp_string_value))
+							for (const QRegularExpression regexp{ R"({(\w+)})" }; const QRegularExpressionMatch & temp_regex_match : regexp.globalMatch(temp_string_value))
 							{
 								QByteArray bytearray_data = json_object_controller.value("data").toObject().value(temp_regex_match.captured(1)).toString().toLocal8Bit();
 
@@ -68,6 +68,11 @@ void SimpleServers::Run() const
 									QUuid uuid_uuid = QUuid::createUuid();
 									QString string_base_data{ request_request.remote_ip_address.data() };
 									temp_string_value.replace(temp_regex_match.captured(), QUuid::createUuidV5(uuid_uuid, string_base_data).toString());
+								}
+								else if (!bytearray_data.compare("{CaptchaImage}"))
+								{
+									QByteArray bytearray_base64 = CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage());
+									temp_string_value.replace(temp_regex_match.captured(), bytearray_base64);
 								}
 							}
 							json_object_response.insert(temp_bytearray_key, QString{ temp_string_value });

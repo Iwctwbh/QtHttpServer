@@ -31,7 +31,7 @@ void CommonTools::MergeImage(cv::Mat &src, cv::Mat &dst)
 	}
 }
 
-cv::Mat CommonTools::GetCaptchaImage()
+cv::Mat CommonTools::CreateCaptchaImage(std::string *out_string_result)
 {
 	uint16_t uint16_image_width = 300;
 	uint16_t uint16_image_height = 70;
@@ -39,14 +39,14 @@ cv::Mat CommonTools::GetCaptchaImage()
 	std::uniform_int_distribution<> distribution_int(0, 32767);
 	cv::Mat mat_image(uint16_image_height, uint16_image_width, CV_8UC3, cv::Scalar(255, 255, 255));
 
-	std::string string_filename{};
+	std::string string_result{};
 	//增加随机字符
 	std::string string_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	std::string string_letter_code;
 	string_letter_code.resize(6);
 	for (char &i : string_letter_code)
 	{
-		i = string_chars[distribution_int(random_engine_seed) % 36];
+		i = string_chars[distribution_int(random_engine_seed) % string_chars.length()];
 	}
 	uint16_t uint16_pos_x{ 0 };
 	uint16_t uint16_pos_y{ 25 };
@@ -54,7 +54,7 @@ cv::Mat CommonTools::GetCaptchaImage()
 	{
 		cv::Mat mat_image_copy(uint16_image_height, uint16_image_width, CV_8UC3, cv::Scalar(255, 255, 255));
 		std::string string_char{ char_char };
-		string_filename += string_char;
+		string_result += string_char;
 		cv::Point point_origin;
 		point_origin.x = uint16_pos_x + distribution_int(random_engine_seed) % 50;
 		while (point_origin.x - uint16_pos_x < 15)
@@ -82,13 +82,16 @@ cv::Mat CommonTools::GetCaptchaImage()
 	for (int i = 0; i < char_num; i++)
 	{
 		std::string temp_string = " ";
-		temp_string[0] = string_chars[distribution_int(random_engine_seed) % 36];
+		temp_string[0] = string_chars[distribution_int(random_engine_seed) % string_chars.length()];
 		cv::Point origin;
 		origin.x = 50 + distribution_int(random_engine_seed) % 300;
 		origin.y = 10 + distribution_int(random_engine_seed) % 70;
 		putText(mat_image, temp_string, origin, cv::FONT_HERSHEY_COMPLEX, 0.4, cv::Scalar(distribution_int(random_engine_seed) % 255, distribution_int(random_engine_seed) % 255, distribution_int(random_engine_seed) % 255), 1, 8, false);
 	}
-
+	if (out_string_result)
+	{
+		*out_string_result = string_result;
+	}
 	return mat_image;
 }
 
