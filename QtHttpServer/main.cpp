@@ -46,7 +46,5 @@ int main(int argc, char *argv[])
 		}
 	}
 	qDebug() << "...Success";
-	QtCommonTools abc{};
-	qDebug() << abc.GetMiCode();
 	return QCoreApplication::exec();
 }

@@ -60,7 +60,7 @@ void SimpleServers::Run() const
 								{
 									if (const QMimeType temp_mimetype{ QMimeDatabase{}.mimeTypeForFile(bytearray_data) }; temp_mimetype.name().startsWith("image/"))
 									{
-										temp_string_value.replace(temp_regex_match.captured(), QtCommonTools::ConvertImgToBase64(bytearray_data));
+										temp_string_value.replace(temp_regex_match.captured(), CommonTools::ConvertImgToBase64(bytearray_data));
 									}
 								}
 								else if (!bytearray_data.compare("{GUID}") || !bytearray_data.compare("{UUID}"))

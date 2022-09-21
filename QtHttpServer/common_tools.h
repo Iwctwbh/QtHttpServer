@@ -7,14 +7,15 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
-class QtCommonTools
+class CommonTools
 {
 public:
 	static QByteArray ConvertImgToBase64(const QByteArray &string_path);
-	[[nodiscard]] QString GetMiCode() const;
+	static cv::Mat GetCaptchaImage();
+	static QByteArray ConvertMatToBase64(const cv::Mat &arg_mat_image);
 
 private:
-	static void MyMerge(cv::Mat src, cv::Mat &dst);
+	static void MergeImage(cv::Mat &src, cv::Mat &dst);
 };
 
 #endif // SIMPLE_SERVERS_H
