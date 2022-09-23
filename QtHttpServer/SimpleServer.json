@@ -43,8 +43,6 @@
           "data": {
             "GUID": "{GUID}",
             "Resource": "..\\Resource\\17.gif",
-            "CaptchaImage": "{CaptchaImage}",
-            "CaptchaImageResult": "{CaptchaImageResult}",
             "Captcha": {
               "{CaptchaImage}": {
                 "image": "{CaptchaImage}",
@@ -53,11 +51,11 @@
             }
           },
           "SQL": "SQLite",
-          "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ('{GUID}','{Captcha{result}}')",
+          "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ('{GUID}','{Captcha.result}')",
           "Response": {
             "image": "{Resource}",
             "UUID": "{GUID}",
-            "CaptchaImage": "{Captcha{image}}"
+            "CaptchaImage": "{Captcha.image}"
           }
         },
         "/login": {
