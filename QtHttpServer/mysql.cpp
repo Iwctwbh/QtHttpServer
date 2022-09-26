@@ -39,7 +39,7 @@ void Mysql::close()
 
 QSqlQuery* Mysql::QueryExec(QString sql)
 {
-	static QSqlQuery *query = new QSqlQuery(QSqlDatabase::database(_connectionName));
+	static auto query = new QSqlQuery(QSqlDatabase::database(_connectionName));
 	if (db.open())
 	{
 		if (!query->exec(sql))
@@ -69,7 +69,7 @@ QString Mysql::lastError() const
 	return _lastError;
 }
 
-void Mysql::setLastError(const QString &lastError)
+void Mysql::setLastError(const QString& lastError)
 {
 	_lastError = lastError;
 	qDebug() << "MySQL Error " << lastError;

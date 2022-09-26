@@ -3,6 +3,7 @@
 #define SIMPLE_SERVERS_H
 
 #include <crow.h>
+
 #include <QtCore/QtCore>
 
 #include "log_helper_handler.h"
@@ -13,11 +14,11 @@ class SimpleServers final : public QObject
 {
 	Q_OBJECT
 public:
-	explicit SimpleServers(QObject *parent = nullptr);
+	explicit SimpleServers(QObject* parent = nullptr);
 
 	struct SimpleServer
 	{
-		//QByteArray *controller;
+		// QByteArray *controller;
 		QByteArray method{};
 		QList<QByteArray> list_parameters{};
 		QByteArray bytearray_sql{};
@@ -27,19 +28,20 @@ public:
 
 	/*static std::vector<QByteArray> GetVectorMethodStrings()
 	{
-		std::vector<QByteArray> list_method_strings{};
-		std::ranges::for_each(crow::method_strings, [&](const char *temp_ptr_char)
-		{
-			list_method_strings.emplace_back(temp_ptr_char);
-		});
-		return list_method_strings;
+	        std::vector<QByteArray> list_method_strings{};
+	        std::ranges::for_each(crow::method_strings, [&](const char
+	*temp_ptr_char)
+	        {
+	                list_method_strings.emplace_back(temp_ptr_char);
+	        });
+	        return list_method_strings;
 	}*/
 
 	struct SimpleServerMiddleware : crow::ILocalMiddleware
 	{
 		QString string_message{};
 
-		void SetMessage(const QString &arg_message)
+		void SetMessage(const QString& arg_message)
 		{
 			string_message = arg_message;
 		}
@@ -48,19 +50,21 @@ public:
 		{
 		};
 
-		void before_handle(crow::request & /*req*/, crow::response & /*res*/, context & /*ctx*/) const
+		void before_handle(crow::request& /*req*/, crow::response& /*res*/,
+		                   context& /*ctx*/) const
 		{
-			//CROW_LOG_DEBUG << " - MESSAGE: " << string_message;
+			// CROW_LOG_DEBUG << " - MESSAGE: " << string_message;
 		}
 
-		void after_handle(crow::request & /*req*/, crow::response & /*res*/, context & /*ctx*/)
+		void after_handle(crow::request& /*req*/, crow::response& /*res*/,
+		                  context& /*ctx*/)
 		{
 			// no-op
-			//CROW_LOG_DEBUG << " - END";
+			// CROW_LOG_DEBUG << " - END";
 		}
 	};
-	
-	void InitSimpleServers(const QJsonObject &arg_json_object);
+
+	void InitSimpleServers(const QJsonObject& arg_json_object);
 	void Run() const;
 
 	void emit_run();
@@ -72,4 +76,4 @@ private:
 	QJsonObject json_object_simple_server_{};
 };
 
-#endif // SIMPLE_SERVERS_H
+#endif  // SIMPLE_SERVERS_H
