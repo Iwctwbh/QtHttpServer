@@ -29,6 +29,6 @@ private:
 	QString _connectionName;
 	//QMutex mutex;
 
-	void setLastError(const QString &lastError);
+	void setLastError(const QString& lastError);
 };
 #endif // MYSQL_H
