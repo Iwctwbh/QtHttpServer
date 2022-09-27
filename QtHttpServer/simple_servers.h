@@ -50,14 +50,12 @@ public:
 		{
 		};
 
-		void before_handle(crow::request& /*req*/, crow::response& /*res*/,
-		                   context& /*ctx*/) const
+		void before_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/) const
 		{
 			// CROW_LOG_DEBUG << " - MESSAGE: " << string_message;
 		}
 
-		void after_handle(crow::request& /*req*/, crow::response& /*res*/,
-		                  context& /*ctx*/)
+		void after_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/)
 		{
 			// no-op
 			// CROW_LOG_DEBUG << " - END";

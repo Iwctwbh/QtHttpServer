@@ -24,35 +24,29 @@ int main(int argc, char* argv[])
 			qDebug() << "SimpleServer.json open success";
 			const QByteArray bytearray_simple_server{file_simple_server.readAll()};
 			QJsonParseError error_json_parse{QJsonParseError::NoError};
-			if (const QJsonDocument json_document_simple_server_file{
-					QJsonDocument::fromJson(bytearray_simple_server,
-					                        &error_json_parse)
-				};
-				error_json_parse.error == QJsonParseError::NoError &&
-				json_document_simple_server_file.isObject())
+			if (const QJsonDocument json_document_simple_server_file{QJsonDocument::fromJson(bytearray_simple_server, &error_json_parse)};
+				error_json_parse.error == QJsonParseError::NoError && json_document_simple_server_file.isObject())
 			{
 				QJsonObject json_object_simple_servers{
 					json_document_simple_server_file.object()
 					                                .value("SimpleServers")
 					                                .toObject()
 				};
-				std::ranges::for_each(
-					json_object_simple_servers.keys(),
-					[&json_object_simple_servers](const QJsonValue& temp_json_key)
-					{
-						// QThread
-						const auto thread_simple_servers = new QThread();
-						const auto simple_servers = new SimpleServers();
+				std::ranges::for_each(json_object_simple_servers.keys(), [&json_object_simple_servers](const QJsonValue& temp_json_key)
+				{
+					// QThread
+					const auto thread_simple_servers = new QThread();
+					const auto simple_servers = new SimpleServers();
 
-						simple_servers->InitSimpleServers(
-							json_object_simple_servers.value(temp_json_key.toString())
-							                          .toObject());
-						simple_servers->moveToThread(thread_simple_servers);
-						thread_simple_servers->start();
-						QObject::connect(simple_servers, &SimpleServers::signal_run,
-						                 simple_servers, &SimpleServers::Run);
-						simple_servers->emit_run();
-					});
+					simple_servers->InitSimpleServers(
+						json_object_simple_servers.value(temp_json_key.toString())
+						                          .toObject());
+					simple_servers->moveToThread(thread_simple_servers);
+					thread_simple_servers->start();
+					QObject::connect(simple_servers, &SimpleServers::signal_run,
+					                 simple_servers, &SimpleServers::Run);
+					simple_servers->emit_run();
+				});
 			}
 			else
 			{
