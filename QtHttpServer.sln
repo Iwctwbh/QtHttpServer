@@ -7,6 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtHttpServer", "QtHttpServe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resource", "Resource", "{1DF85EC7-558D-4D3C-87A3-DAC4938AF32A}"
 	ProjectSection(SolutionItems) = preProject
+		Resource\17.gif = Resource\17.gif
 		Resource\YQRC.png = Resource\YQRC.png
 	EndProjectSection
 EndProject

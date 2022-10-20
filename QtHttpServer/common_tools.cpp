@@ -1,5 +1,10 @@
 ﻿#include "common_tools.h"
 
+void HanZiCaptchaImage(const QByteArray& bytearray_base64)
+{
+	cv::Mat cv_mat{};
+}
+
 QByteArray CommonTools::ConvertImgToBase64(const QByteArray& string_path)
 {
 	QByteArray bytearray_image_base64{};

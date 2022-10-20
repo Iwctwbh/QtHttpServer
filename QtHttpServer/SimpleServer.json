@@ -21,7 +21,7 @@
   },
   "SimpleServers": {
     "Default": {
-      "SimpleServerIpAddress": "[::1]",
+      "SimpleServerIpAddress": "10.11.12.6",
       "SimpleServerPort": "8080",
       "SimpleServerLogLevel": "1",
       "Controllers": {
@@ -34,28 +34,30 @@
       }
     },
     "vueWebServer": {
-      "SimpleServerIpAddress": "[::1]",
+      "SimpleServerIpAddress": "10.11.12.6",
       "SimpleServerPort": "18080",
       "SimpleServerLogLevel": "1",
       "Controllers": {
         "/captchaImage": {
           "Methods": "POST, GET",
           "data": {
-            "GUID": "{GUID}",
+            "GUID1": "{GUID}",
             "Resource": "..\\Resource\\17.gif",
             "Captcha": {
               "{CaptchaImage}": {
                 "image": "{CaptchaImage}",
                 "result": "{CaptchaImageResult}"
-              }
+              },
+              "ID": "{GUID}"
             }
           },
           "SQL": "SQLite",
           "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ('{GUID}','{Captcha.result}')",
           "Response": {
             "image": "{Resource}",
-            "UUID": "{GUID}",
-            "CaptchaImage": "{Captcha.image}"
+            "UUID": "{GUID1}{GUID1}",
+            "CaptchaImage": "{Captcha.image}",
+            "ID": "{Captcha.ID}"
           }
         },
         "/login": {

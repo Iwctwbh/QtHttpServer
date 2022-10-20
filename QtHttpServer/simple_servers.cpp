@@ -58,63 +58,76 @@ void SimpleServers::Run() const
 						QJsonObject json_object_data{json_object_controller.value("data").toObject()};
 						std::function<void(QJsonObject& arg_json_object_parent, QJsonObject& arg_json_object_child)> function_resolve_data_mapping = [&](QJsonObject& arg_json_object_parent, QJsonObject& arg_json_object_child)-> void
 						{
-							std::ranges::for_each(arg_json_object_child.keys(),
-							                      [&](const QString& temp_bytearray_child_key) -> void
-							                      {
-								                      if (const QRegularExpression regexp{R"({(.*?)})"};
-									                      regexp.match(temp_bytearray_child_key).hasMatch())
-								                      {
-									                      QJsonObject temp_json_object_child_child{arg_json_object_child.value(temp_bytearray_child_key).toObject()};
-									                      function_resolve_data_mapping(arg_json_object_child, temp_json_object_child_child);
-									                      std::ranges::for_each(temp_json_object_child_child.keys(), [&](const QString& temp_string_key)-> void
-									                      {
-										                      arg_json_object_child.insert(temp_string_key, temp_json_object_child_child.value(temp_string_key));
-									                      });
-									                      arg_json_object_child.remove(temp_bytearray_child_key);
-								                      }
-								                      else
-								                      {
-									                      for (QString temp_string_value{arg_json_object_child.value(temp_bytearray_child_key).toString()}; const QRegularExpressionMatch& temp_regex_match : regexp.globalMatch(
-										                           temp_string_value))
-									                      {
-										                      if (QJsonValue json_value_data{json_object_data.value(temp_regex_match.captured(1))};
-											                      json_value_data.isObject())
-										                      {
-											                      QJsonObject temp_json_object_child_child{json_value_data.toObject()};
-											                      function_resolve_data_mapping(arg_json_object_child, temp_json_object_child_child);
-											                      arg_json_object_child.insert(temp_bytearray_child_key, temp_json_object_child_child);
-										                      }
-										                      else
-										                      {
-											                      QByteArray bytearray_data{json_value_data.toString().toLocal8Bit()};
+							std::ranges::for_each(arg_json_object_child.keys(), [&](const QString& temp_bytearray_child_key) -> void
+							{
+								if (const QRegularExpression regexp{R"({(.*?)})"};
+									regexp.match(temp_bytearray_child_key).hasMatch())
+								{
+									QJsonObject temp_json_object_child_child{arg_json_object_child.value(temp_bytearray_child_key).toObject()};
+									function_resolve_data_mapping(arg_json_object_child, temp_json_object_child_child);
+									std::ranges::for_each(temp_json_object_child_child.keys(), [&](const QString& temp_string_key)-> void
+									{
+										arg_json_object_child.insert(temp_string_key, temp_json_object_child_child.value(temp_string_key));
+									});
+									arg_json_object_child.remove(temp_bytearray_child_key);
+								}
+								else
+								{
+									if (arg_json_object_child.value(temp_bytearray_child_key).isObject())
+									{
+										QJsonObject json_object_child_value = arg_json_object_child.value(temp_bytearray_child_key).toObject();
+										function_resolve_data_mapping(arg_json_object_child, json_object_child_value);
+										/*std::ranges::for_each(json_object_child_value.keys(), [&](const QString& temp_string_key)-> void
+										{
+											arg_json_object_child.insert(temp_bytearray_child_key, json_object_child_value.value(temp_string_key));
+										});*/
+										arg_json_object_child.insert(temp_bytearray_child_key, json_object_child_value);
+									}
+									else
+									{
+										QString copy_string_value{arg_json_object_child.value(temp_bytearray_child_key).toString()};
+										for (const QRegularExpressionMatch& temp_regex_match : regexp.globalMatch(copy_string_value))
+										{
+											if (QJsonValue json_value_data{arg_json_object_child.value(temp_bytearray_child_key)};
+												json_value_data.isObject())
+											{
+												//QJsonObject temp_json_object_child_child{json_value_data.toObject()};
+												//function_resolve_data_mapping(arg_json_object_child, temp_json_object_child_child);
+												//arg_json_object_child.insert(temp_bytearray_child_key, temp_json_object_child_child);
+											}
+											else
+											{
+												QByteArray bytearray_data{json_value_data.toString().toLocal8Bit()};
 
-											                      if (const QFile temp_file{bytearray_data};
-												                      temp_file.exists())
-											                      {
-												                      if (const QMimeType temp_mimetype{QMimeDatabase{}.mimeTypeForFile(bytearray_data)};
-													                      temp_mimetype.name().startsWith("image/"))
-												                      {
-													                      temp_string_value.replace(temp_regex_match.captured(), CommonTools::ConvertImgToBase64(bytearray_data));
-												                      }
-											                      }
-											                      else if (!bytearray_data.compare("{GUID}") || !bytearray_data.compare("{UUID}"))
-											                      {
-												                      QUuid uuid_uuid{QUuid::createUuid()};
-												                      QString string_base_data{request_request.remote_ip_address.data()};
-												                      temp_string_value.replace(temp_regex_match.captured(), QUuid::createUuidV5(uuid_uuid, string_base_data).toString());
-											                      }
-											                      else if (!bytearray_data.compare("{CaptchaImage}"))
-											                      {
-												                      QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage())};
-												                      temp_string_value.replace(temp_regex_match.captured(), bytearray_base64);
-											                      }
-										                      }
-									                      }
-								                      }
-							                      });
+												if (const QFile temp_file{bytearray_data};
+													temp_file.exists())
+												{
+													if (const QMimeType temp_mimetype{QMimeDatabase{}.mimeTypeForFile(bytearray_data)};
+														temp_mimetype.name().startsWith("image/"))
+													{
+														copy_string_value.replace(temp_regex_match.captured(), CommonTools::ConvertImgToBase64(bytearray_data));
+													}
+												}
+												else if (!bytearray_data.compare("{GUID}") || !bytearray_data.compare("{UUID}"))
+												{
+													QUuid uuid_uuid{QUuid::createUuid()};
+													QString string_base_data{request_request.remote_ip_address.data()};
+													copy_string_value.replace(temp_regex_match.captured(), QUuid::createUuidV5(uuid_uuid, string_base_data).toString());
+												}
+												else if (!bytearray_data.compare("{CaptchaImage}"))
+												{
+													QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage())};
+													copy_string_value.replace(temp_regex_match.captured(), bytearray_base64);
+												}
+											}
+										}
+										arg_json_object_child.insert(temp_bytearray_child_key, copy_string_value);
+									}
+								}
+							});
 						};
 						function_resolve_data_mapping(json_object_controller, json_object_data);
-						std::ranges::for_each(json_object_response.keys(), [&](const QString& temp_string_key)-> void
+						std::ranges::for_each(json_object_response.keys(), [&](const QString& temp_string_key) -> void
 						{
 							QString temp_string_value{json_object_response.value(temp_string_key).toString()};
 							for (const QRegularExpression regexp{R"({(.*?)})"};
@@ -124,7 +137,7 @@ void SimpleServers::Run() const
 								QString out_temp_string{};
 								bool bool_is_json_object{true};
 								bool bool_is_success{true};
-								foreach(const QString& temp_string, temp_regex_match.captured(1).split('.'))
+								for (const QString& temp_string : temp_regex_match.captured(1).split('.'))
 								{
 									out_temp_string = temp_string;
 									if (bool_is_json_object)
@@ -149,7 +162,7 @@ void SimpleServers::Run() const
 								}
 								if (bool_is_success)
 								{
-									temp_string_value.replace(temp_regex_match.captured(1), copy_json_object_data.value(out_temp_string).toString());
+									temp_string_value.replace(temp_regex_match.captured(), copy_json_object_data.value(out_temp_string).toString());
 								}
 							}
 							json_object_response.insert(temp_string_key,
