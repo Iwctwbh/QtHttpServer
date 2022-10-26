@@ -9,6 +9,7 @@
   },
   "SQL": {
     "MySQL": {
+      "SQLDriver": "MySQL",
       "Host": "127.0.0.1",
       "Port": "3306",
       "UserName": "Test",
@@ -16,7 +17,16 @@
       "DataBase": "Test"
     },
     "SQLite": {
+      "SQLDriver": "SQLite",
       "DBFilePath": "..\\SimpleServers.db"
+    },
+    "SQLServer": {
+      "SQLDriver": "SQLServer",
+      "Host": "127.0.0.1",
+      "Port": "3306",
+      "UserName": "Test",
+      "Password": "AJK8d9sfjc90sd8f9cxSJD@09^8d#N*&DFDJDNDaJJJdsf090905",
+      "DataBase": "Test"
     }
   },
   "SimpleServers": {
@@ -66,10 +76,12 @@
             "UserName": null,
             "Password": "{MD5}"
           },
-          "SQL": "SQLite",
-          "SqlQuery": "SELECT count(*) AS RESULT FROM tblSimpleServers WHERE UserName = {UserName} AND Password = {Password}",
-          "data": {
-            "result": "{SqlResult}"
+          "SQL": {
+            "SQLName":"SQLite",
+            "SqlQuery": "SELECT count(*) AS RESULT FROM tblSimpleServers WHERE UserName = {UserName} AND Password = {Password}",
+            "data": {
+              "result": "{SqlResult}"
+            }
           },
           "Response": {
             "result": "{result}"

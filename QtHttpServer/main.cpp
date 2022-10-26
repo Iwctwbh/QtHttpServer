@@ -1,6 +1,7 @@
 ﻿//#pragma execution_character_set("utf-8")
 
 #include <QtCore/QCoreApplication>
+#include <QtSql>
 
 #include "mysql.h"
 #include "simple_servers.h"
@@ -27,6 +28,15 @@ int main(int argc, char* argv[])
 			if (const QJsonDocument json_document_simple_server_file{QJsonDocument::fromJson(bytearray_simple_server, &error_json_parse)};
 				error_json_parse.error == QJsonParseError::NoError && json_document_simple_server_file.isObject())
 			{
+#pragma region SQL
+				QJsonObject json_object_SQL{
+					json_document_simple_server_file.object()
+					                                .value("SQL")
+					                                .toObject()
+				};
+#pragma endregion
+
+				// SimpleServers
 				QJsonObject json_object_simple_servers{
 					json_document_simple_server_file.object()
 					                                .value("SimpleServers")
@@ -38,9 +48,8 @@ int main(int argc, char* argv[])
 					const auto thread_simple_servers = new QThread();
 					const auto simple_servers = new SimpleServers();
 
-					simple_servers->InitSimpleServers(
-						json_object_simple_servers.value(temp_json_key.toString())
-						                          .toObject());
+					simple_servers->InitSimpleServers(json_object_simple_servers.value(temp_json_key.toString())
+					                                                            .toObject());
 					simple_servers->moveToThread(thread_simple_servers);
 					thread_simple_servers->start();
 					QObject::connect(simple_servers, &SimpleServers::signal_run,

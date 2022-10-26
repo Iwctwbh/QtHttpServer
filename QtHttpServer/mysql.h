@@ -7,11 +7,12 @@
 class Mysql
 {
 public:
-	Mysql(QString hostname, int port, QString dbname, QString username, QString pwd, QString connectionName);
+	Mysql();
+	Mysql(QString SQLDriver, QString hostname, int port, QString dbname, QString username, QString pwd, QString connectionName);
 	bool connect();
 	void close();
 
-	QSqlQuery* QueryExec(QString sql);
+	QSqlQuery QueryExec(QString sql);
 
 	QString lastError() const;
 	~Mysql(void);
@@ -28,6 +29,7 @@ private:
 	QSqlDatabase db;
 	QString _connectionName;
 	//QMutex mutex;
+	QString sql_driver_; // QStringList drivers = QSqlDatabase::drivers();
 
 	void setLastError(const QString& lastError);
 };

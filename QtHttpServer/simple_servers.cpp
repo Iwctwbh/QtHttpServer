@@ -4,13 +4,33 @@ SimpleServers::SimpleServers(QObject* parent) : QObject(parent)
 {
 }
 
+void SimpleServers::InitSQL()
+{
+	Mysql sql_server{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
+	sql_server.connect();
+	QSqlQuery query_Sql = sql_server.QueryExec("SELECT TOP 1 * FROM tblConfig with(nolock)");
+	query_Sql.setForwardOnly(true);
+	QJsonArray JsonArray_Temp;
+
+	while (query_Sql.next())
+	{
+		for (int x{0}; x < query_Sql.record().count(); ++x)
+		{
+			JsonArray_Temp.push_back(QJsonObject{{query_Sql.record().fieldName(x), QJsonValue::fromVariant(query_Sql.value(x))}});
+		}
+	}
+
+	qDebug() << QJsonDocument{JsonArray_Temp}.toJson();
+}
+
 void SimpleServers::InitSimpleServers(const QJsonObject& arg_json_object)
 {
 	json_object_simple_server_ = arg_json_object;
 }
 
-void SimpleServers::Run() const
+void SimpleServers::Run()
 {
+	InitSQL();
 	const QJsonObject json_object_simple_server = json_object_simple_server_;
 
 	LogHelperHandler handler_log_helper{};
@@ -24,6 +44,25 @@ void SimpleServers::Run() const
 	simple_app_crow.catchall_route()([&](const crow::request& request_request)
 	{
 		crow::response response_response{};
+		response_response.code = 200;
+		response_response.body = "";
+		Mysql sql_server{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
+		sql_server.connect();
+		QSqlQuery query_Sql = sql_server.QueryExec("SELECT TOP 1 * FROM tblConfig");
+		query_Sql.setForwardOnly(true);
+		QJsonArray JsonArray_Temp;
+
+		while (query_Sql.next())
+		{
+			for (int x{0}; x < query_Sql.record().count(); ++x)
+			{
+				JsonArray_Temp.push_back(QJsonObject{{query_Sql.record().fieldName(x), QJsonValue::fromVariant(query_Sql.value(x))}});
+			}
+		}
+
+		response_response.body = QJsonDocument{JsonArray_Temp}.toJson();
+		return response_response;
+
 		if (!json_object_controllers.contains(request_request.url.data()))
 		{
 			response_response.code = 404;
@@ -127,6 +166,10 @@ void SimpleServers::Run() const
 							});
 						};
 						function_resolve_data_mapping(json_object_controller, json_object_data);
+
+						// SQL
+						// QJsonObject json_object_SQL{json_object_controller.value("SQL").toObject()};
+
 						std::ranges::for_each(json_object_response.keys(), [&](const QString& temp_string_key) -> void
 						{
 							QString temp_string_value{json_object_response.value(temp_string_key).toString()};
@@ -183,7 +226,7 @@ void SimpleServers::Run() const
 		                                                  .data())
 		               .port(json_object_simple_server.value("SimpleServerPort")
 		                                              .toString()
-		                                              .toInt())
+		                                              .toUInt())
 		               .multithreaded()
 		               .run_async();
 }

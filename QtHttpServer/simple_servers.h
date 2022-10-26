@@ -5,10 +5,12 @@
 #include <crow.h>
 
 #include <QtCore/QtCore>
+#include <QtSql>
 
 #include "log_helper_handler.h"
 //#include "qt_common_tools.h"
 #include "common_tools.h"
+#include "mysql.h"
 
 class SimpleServers final : public QObject
 {
@@ -62,8 +64,10 @@ public:
 		}
 	};
 
+	void InitSQL();
+
 	void InitSimpleServers(const QJsonObject& arg_json_object);
-	void Run() const;
+	void Run();
 
 	void emit_run();
 
@@ -72,6 +76,9 @@ signals:
 
 private:
 	QJsonObject json_object_simple_server_{};
+	QMap<QString, Mysql> hash_sql_{};
+	// Mysql sql_;
+	Mysql sql_server_{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
 };
 
 #endif  // SIMPLE_SERVERS_H
