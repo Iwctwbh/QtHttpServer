@@ -6,7 +6,7 @@ SimpleServers::SimpleServers(QObject* parent) : QObject(parent)
 
 void SimpleServers::InitSQL()
 {
-	Mysql sql_server{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
+	// Mysql sql_server{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
 	sql_server.connect();
 	QSqlQuery query_Sql = sql_server.QueryExec("SELECT TOP 1 * FROM tblConfig with(nolock)");
 	query_Sql.setForwardOnly(true);
@@ -46,8 +46,6 @@ void SimpleServers::Run()
 		crow::response response_response{};
 		response_response.code = 200;
 		response_response.body = "";
-		Mysql sql_server{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
-		sql_server.connect();
 		QSqlQuery query_Sql = sql_server.QueryExec("SELECT TOP 1 * FROM tblConfig");
 		query_Sql.setForwardOnly(true);
 		QJsonArray JsonArray_Temp;

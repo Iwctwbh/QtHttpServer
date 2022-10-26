@@ -78,7 +78,7 @@ private:
 	QJsonObject json_object_simple_server_{};
 	QMap<QString, Mysql> hash_sql_{};
 	// Mysql sql_;
-	Mysql sql_server_{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
+	Mysql sql_server{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
 };
 
 #endif  // SIMPLE_SERVERS_H
