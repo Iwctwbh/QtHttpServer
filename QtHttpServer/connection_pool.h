@@ -11,7 +11,6 @@
 class ConnectionPool
 {
 public:
-	ConnectionPool();
 	static void release(); // 关闭所有的数据库连接
 	QSqlDatabase openConnection(); // 获取数据库连接
 	void closeConnection(QSqlDatabase connection); // 释放数据库连接回连接池
@@ -23,7 +22,7 @@ public:
 private:
 	static ConnectionPool& getInstance();
 
-	//ConnectionPool();
+	ConnectionPool();
 	ConnectionPool(const ConnectionPool& other);
 	ConnectionPool& operator=(const ConnectionPool& other);
 	QSqlDatabase createConnection(const QString& connectionName); // 创建数据库连接

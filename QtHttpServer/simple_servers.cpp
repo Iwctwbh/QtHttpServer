@@ -1,6 +1,6 @@
 ﻿#include "simple_servers.h"
 
-#include "connection_pool.h"
+#include "connection_pool_simple.h"
 
 SimpleServers::SimpleServers(QObject* parent) : QObject(parent)
 {
@@ -32,9 +32,6 @@ void SimpleServers::InitSimpleServers(const QJsonObject& arg_json_object)
 
 void SimpleServers::Run()
 {
-	// connectionpool
-	ConnectionPool pool;
-
 	// InitSQL();
 	const QJsonObject json_object_simple_server = json_object_simple_server_;
 
@@ -54,7 +51,7 @@ void SimpleServers::Run()
 		//QSqlQuery query_Sql = sql_server.QueryExec("SELECT TOP 1 * FROM tblConfig");
 
 		// [1] 从数据库连接池里取得连接
-		QSqlDatabase db = pool.openConnection();
+		QSqlDatabase db = ConnectionPoolSimple::openConnection();
 
 		// [2] 使用连接查询数据库
 		QSqlQuery query(db);
