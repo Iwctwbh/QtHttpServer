@@ -65,10 +65,10 @@ bool Mysql::connect()
 
 void Mysql::close()
 {
-	if (db.isOpen())
+	/*if (db.isOpen())
 	{
 		db.close();
-	}
+	}*/
 }
 
 QSqlQuery Mysql::QueryExec(QString sql)
@@ -95,7 +95,7 @@ QSqlQuery Mysql::QueryExec(QString sql)
 
 Mysql::~Mysql()
 {
-	this->close();
+	//this->close();
 }
 
 QString Mysql::lastError() const

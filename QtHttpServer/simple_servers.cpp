@@ -1,5 +1,7 @@
 ﻿#include "simple_servers.h"
 
+#include "connection_pool.h"
+
 SimpleServers::SimpleServers(QObject* parent) : QObject(parent)
 {
 }
@@ -30,7 +32,7 @@ void SimpleServers::InitSimpleServers(const QJsonObject& arg_json_object)
 
 void SimpleServers::Run()
 {
-	InitSQL();
+	// InitSQL();
 	const QJsonObject json_object_simple_server = json_object_simple_server_;
 
 	LogHelperHandler handler_log_helper{};
@@ -46,15 +48,23 @@ void SimpleServers::Run()
 		crow::response response_response{};
 		response_response.code = 200;
 		response_response.body = "";
-		QSqlQuery query_Sql = sql_server.QueryExec("SELECT TOP 1 * FROM tblConfig");
-		query_Sql.setForwardOnly(true);
+		//QSqlQuery query_Sql = sql_server.QueryExec("SELECT TOP 1 * FROM tblConfig");
+
+		// [1] 从数据库连接池里取得连接
+		QSqlDatabase db = ConnectionPool::openConnection();
+
+		// [2] 使用连接查询数据库
+		QSqlQuery query(db);
+
+		query.setForwardOnly(true);
+		query.exec("SELECT TOP 1 * FROM tblConfig");
 		QJsonArray JsonArray_Temp;
 
-		while (query_Sql.next())
+		while (query.next())
 		{
-			for (int x{0}; x < query_Sql.record().count(); ++x)
+			for (int x{0}; x < query.record().count(); ++x)
 			{
-				JsonArray_Temp.push_back(QJsonObject{{query_Sql.record().fieldName(x), QJsonValue::fromVariant(query_Sql.value(x))}});
+				JsonArray_Temp.push_back(QJsonObject{{query.record().fieldName(x), QJsonValue::fromVariant(query.value(x))}});
 			}
 		}
 

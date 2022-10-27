@@ -125,12 +125,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="common_tools.cpp" />
+    <ClCompile Include="connection_pool.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mysql.cpp" />
     <ClCompile Include="simple_servers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_tools.h" />
+    <ClInclude Include="connection_pool.h" />
     <ClInclude Include="log_helper_handler.h" />
     <ClInclude Include="mysql.h" />
     <QtMoc Include="simple_servers.h" />
