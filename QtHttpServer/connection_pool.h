@@ -2,25 +2,58 @@
 #ifndef CONNECTION_POOL_H
 #define CONNECTION_POOL_H
 
+#include <QtSql>
+#include <QQueue>
 #include <QString>
-#include <QSqlDatabase>
-#include <QSqlQuery>
+#include <QMutex>
+#include <QMutexLocker>
 
 class ConnectionPool
 {
 public:
-	/**
-	 * @brief 获取数据库连接，连接使用完后不需要手动关闭，数据库连接池会在使用此连接的线程结束后自动关闭连接。
-	 * 传入的连接名 connectionName 默认为空 (内部会为连接名基于线程的信息创建一个唯一的前缀)，
-	 * 如果同一个线程需要使用多个不同的数据库连接，可以传入不同的 connectionName
-	 *
-	 * @param connectionName 连接的名字
-	 * @return 返回数据库连接
-	 */
-	static QSqlDatabase openConnection(const QString& connectionName = QString());
+	ConnectionPool();
+	static void release(); // 关闭所有的数据库连接
+	QSqlDatabase openConnection(); // 获取数据库连接
+	void closeConnection(QSqlDatabase connection); // 释放数据库连接回连接池
+
+	static void releaseThreadPool(); // 释放此线程下的全部连接池
+
+	~ConnectionPool();
 
 private:
-	static QSqlDatabase createConnection(const QString& connectionName); // 创建数据库连接
+	static ConnectionPool& getInstance();
+
+	//ConnectionPool();
+	ConnectionPool(const ConnectionPool& other);
+	ConnectionPool& operator=(const ConnectionPool& other);
+	QSqlDatabase createConnection(const QString& connectionName); // 创建数据库连接
+
+	QQueue<QString> usedConnectionNames; // 已使用的数据库连接名
+	QQueue<QString> unusedConnectionNames; // 未使用的数据库连接名
+
+	// 数据库信息
+	QString hostName;
+	QString databaseName;
+	QString username;
+	QString password;
+	QString databaseType;
+
+	bool testOnBorrow; // 取得连接的时候验证连接是否有效
+	QString testOnBorrowSql; // 测试访问数据库的 SQL
+
+	int maxWaitTime; // 获取连接最大等待时间
+	int waitInterval; // 尝试获取连接时等待间隔时间
+	int maxConnectionCount; // 最大连接数
+
+	// static QMutex mutex;
+	// static QWaitCondition waitConnection;
+	// static ConnectionPool *instance;
+
+	QMutex mutex;
+	QWaitCondition waitConnection;
+
+	static QMutex g_thread_mutex;
+	static std::map<int, ConnectionPool*> g_thread_instances;
 };
 
 #endif // CONNECTION_POOL_H

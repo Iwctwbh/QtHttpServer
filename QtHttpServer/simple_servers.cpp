@@ -32,6 +32,9 @@ void SimpleServers::InitSimpleServers(const QJsonObject& arg_json_object)
 
 void SimpleServers::Run()
 {
+	// connectionpool
+	ConnectionPool pool;
+
 	// InitSQL();
 	const QJsonObject json_object_simple_server = json_object_simple_server_;
 
@@ -51,7 +54,7 @@ void SimpleServers::Run()
 		//QSqlQuery query_Sql = sql_server.QueryExec("SELECT TOP 1 * FROM tblConfig");
 
 		// [1] 从数据库连接池里取得连接
-		QSqlDatabase db = ConnectionPool::openConnection();
+		QSqlDatabase db = pool.openConnection();
 
 		// [2] 使用连接查询数据库
 		QSqlQuery query(db);

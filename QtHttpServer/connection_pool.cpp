@@ -1,94 +1,219 @@
 #include "connection_pool.h"
-
 #include <QDebug>
-#include <QtSql>
-#include <QString>
-#include <QThread>
-#include <QCoreApplication>
 
-// 获取数据库连接
-QSqlDatabase ConnectionPool::openConnection(const QString& connectionName)
+// QMutex ConnectionPool::mutex;
+// QWaitCondition ConnectionPool::waitConnection;
+// ConnectionPool* ConnectionPool::instance = NULL;
+
+QMutex ConnectionPool::g_thread_mutex;
+std::map<int, ConnectionPool*> ConnectionPool::g_thread_instances;
+
+ConnectionPool::ConnectionPool()
 {
-	// 1. 创建连接的全名: 基于线程的地址和传入进来的 connectionName，因为同一个线程可能申请创建多个数据库连接
-	// 2. 如果连接已经存在，复用它，而不是重新创建
-	//    2.1 返回连接前访问数据库，如果连接断开，可以重新建立连接 (测试: 关闭数据库几分钟后再启动，再次访问数据库)
-	// 3. 如果连接不存在，则创建连接
-	// 4. 线程结束时，释放在此线程中创建的数据库连接
+	// 创建数据库连接的这些信息在实际开发的时都需要通过读取配置文件得到，
+	// 这里为了演示方便所以写死在了代码里。
+	hostName = "127.0.0.1";
+	databaseName = "qt";
+	username = "root";
+	password = "root";
+	databaseType = "QMYSQL";
+	testOnBorrow = true;
+	testOnBorrowSql = "SELECT 1";
 
-	// [1] 创建连接的全名: 基于线程的地址和传入进来的 connectionName，因为同一个线程可能申请创建多个数据库连接
-	QString baseConnectionName = "conn_" + QString::number(quint64(QThread::currentThread()), 16);
-	QString fullConnectionName = baseConnectionName + connectionName;
-
-	if (QSqlDatabase::contains(fullConnectionName))
-	{
-		// [2] 如果连接已经存在，复用它，而不是重新创建
-		QSqlDatabase existingDb = QSqlDatabase::database(fullConnectionName);
-
-		// [2.1] 返回连接前访问数据库，如果连接断开，可以重新建立连接 (测试: 关闭数据库几分钟后再启动，再次访问数据库)
-		/*QSqlQuery query("SELECT 1", existingDb);
-
-		if (query.lastError().type() != QSqlError::NoError && !existingDb.open())
-		{
-			qDebug().noquote() << "Open datatabase error:" << existingDb.lastError().text();
-			return QSqlDatabase();
-		}*/
-
-		if (!existingDb.isOpen())
-		{
-			existingDb.open();
-		}
-
-		return existingDb;
-	}
-	// [3] 如果连接不存在，则创建连接
-	if (qApp != nullptr)
-	{
-		// [4] 线程结束时，释放在此线程中创建的数据库连接
-		QObject::connect(QThread::currentThread(), &QThread::finished, qApp, [fullConnectionName]
-		{
-			if (QSqlDatabase::contains(fullConnectionName))
-			{
-				QSqlDatabase::removeDatabase(fullConnectionName);
-				qDebug().noquote() << QString("Connection deleted: %1").arg(fullConnectionName);
-			}
-		});
-	}
-
-	return createConnection(fullConnectionName);
+	maxWaitTime = 1000;
+	waitInterval = 200;
+	maxConnectionCount = 5;
 }
 
-// 创建数据库连接
+ConnectionPool::~ConnectionPool()
+{
+	// 销毁连接池的时候删除所有的连接
+	foreach(QString connectionName, usedConnectionNames)
+	{
+		QSqlDatabase::removeDatabase(connectionName);
+	}
+
+	foreach(QString connectionName, unusedConnectionNames)
+	{
+		QSqlDatabase::removeDatabase(connectionName);
+	}
+}
+
+ConnectionPool& ConnectionPool::getInstance()
+{
+	auto _tid = QThread::currentThreadId();
+	ConnectionPool* instance = nullptr;
+	int _itid = reinterpret_cast<int>(_tid);
+
+	QMutexLocker locker(&g_thread_mutex);
+	auto itr = g_thread_instances.find(_itid);
+	if (g_thread_instances.empty() || g_thread_instances.end() == itr)
+	{
+		instance = new ConnectionPool();
+		g_thread_instances[_itid] = instance;
+	}
+	else
+	{
+		instance = itr->second;
+	}
+
+	//if (NULL == instance) {
+	//	QMutexLocker locker(&mutex);
+
+	//	if (NULL == instance) {
+	//		instance = new ConnectionPool();
+	//	}
+	//}
+
+	return *instance;
+}
+
+void ConnectionPool::release()
+{
+	QMutexLocker locker(&g_thread_mutex);
+
+	//移除所有数据库连接
+	QStringList list = QSqlDatabase::connectionNames();
+	QList<QString>::Iterator it = list.begin(), itend = list.end();
+	for (; it != itend; ++it)
+	{
+		QSqlDatabase::removeDatabase(*it);
+	}
+
+	auto itr = g_thread_instances.begin();
+	for (; itr != g_thread_instances.end(); ++itr)
+	{
+		auto _tmp = itr->second;
+		itr->second = nullptr;
+		delete _tmp;
+		_tmp = nullptr;
+	}
+
+	g_thread_instances.clear();
+
+	// QMutexLocker locker(&mutex);
+	// delete instance;
+	// instance = NULL;
+}
+
+QSqlDatabase ConnectionPool::openConnection()
+{
+	ConnectionPool& pool = getInstance();
+	QString connectionName;
+
+	QMutexLocker locker(&mutex);
+
+	// 已创建连接数
+	int connectionCount = pool.unusedConnectionNames.size() + pool.usedConnectionNames.size();
+
+	// 如果连接已经用完，等待 waitInterval 毫秒看看是否有可用连接，最长等待 maxWaitTime 毫秒
+	for (int i = 0;
+	     i < pool.maxWaitTime
+	     && pool.unusedConnectionNames.size() == 0 && connectionCount == pool.maxConnectionCount;
+	     i += pool.waitInterval)
+	{
+		waitConnection.wait(&mutex, pool.waitInterval);
+
+		// 重新计算已创建连接数
+		connectionCount = pool.unusedConnectionNames.size() + pool.usedConnectionNames.size();
+	}
+
+	if (pool.unusedConnectionNames.size() > 0)
+	{
+		// 有已经回收的连接，复用它们
+		connectionName = pool.unusedConnectionNames.dequeue();
+	}
+	else if (connectionCount < pool.maxConnectionCount)
+	{
+		// 没有已经回收的连接，但是没有达到最大连接数，则创建新的连接
+		connectionName = QString("Connection-%1").arg(connectionCount + 1);
+	}
+	else
+	{
+		// 已经达到最大连接数
+		qDebug() << "Cannot create more connections.";
+		return QSqlDatabase();
+	}
+
+	// 创建连接
+	QSqlDatabase db = pool.createConnection(connectionName);
+
+	// 有效的连接才放入 usedConnectionNames
+	if (db.isOpen())
+	{
+		pool.usedConnectionNames.enqueue(connectionName);
+	}
+
+	return db;
+}
+
+void ConnectionPool::closeConnection(QSqlDatabase connection)
+{
+	ConnectionPool& pool = getInstance();
+	QString connectionName = connection.connectionName();
+
+	// 如果是我们创建的连接，从 used 里删除，放入 unused 里
+	if (pool.usedConnectionNames.contains(connectionName))
+	{
+		QMutexLocker locker(&mutex);
+		pool.usedConnectionNames.removeOne(connectionName);
+		pool.unusedConnectionNames.enqueue(connectionName);
+		waitConnection.wakeOne();
+	}
+}
+
 QSqlDatabase ConnectionPool::createConnection(const QString& connectionName)
 {
-	static int sn = 0;
-
-	// 创建一个新的数据库连接
-	/*QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", connectionName);
-	db.setHostName("localhost");
-	db.setDatabaseName("qt");
-	db.setUserName("root");
-	db.setPassword("root");*/
-
-	QSqlDatabase db = QSqlDatabase::addDatabase("QODBC", connectionName);
-	db.setDatabaseName(QString("DRIVER={SQL SERVER};"
-			"SERVER=%1;" //服务器名称
-			"DATABASE=%2;" //数据库名
-			"UID=%3;" //登录名
-			"PWD=%4;" //密码
-			"SQL_ATTR_CONNECTION_POOLING=SQL_CP_ONE_PER_HENV;"
-			"SQL_ATTR_ODBC_VERSION=SQL_OV_ODBC3;"
-		).arg("172.28.99.74,1433") //默认的sqlserver的端口号是1433
-		 .arg("CAPS_DEV")
-		 .arg("svc_portal_crm")
-		 .arg("K97a1pBsvGk8xly6U") //填写你的sa账号的密码！！！！！！！！！！！！
-	);
-	db.setConnectOptions("SQL_ATTR_CONNECTION_POOLING=SQL_CP_ONE_PER_HENV;SQL_ATTR_ODBC_VERSION=SQL_OV_ODBC3;");
-
-	if (db.open())
+	// 连接已经创建过了，复用它，而不是重新创建
+	if (QSqlDatabase::contains(connectionName))
 	{
-		qDebug().noquote() << QString("Connection created: %1, sn: %2").arg(connectionName).arg(++sn);
-		return db;
+		QSqlDatabase db1 = QSqlDatabase::database(connectionName);
+
+		if (testOnBorrow)
+		{
+			// 返回连接前访问数据库，如果连接断开，重新建立连接
+			qDebug() << "Test connection on borrow, execute:" << testOnBorrowSql << ", for" << connectionName;
+			QSqlQuery query(testOnBorrowSql, db1);
+
+			if (query.lastError().type() != QSqlError::NoError && !db1.open())
+			{
+				qDebug() << "Open datatabase error:" << db1.lastError().text();
+				return QSqlDatabase();
+			}
+		}
+
+		return db1;
 	}
-	qDebug().noquote() << "Create connection error:" << db.lastError().text();
-	return QSqlDatabase();
+
+	// 创建一个新的连接
+	QSqlDatabase db = QSqlDatabase::addDatabase(databaseType, connectionName);
+	db.setHostName(hostName);
+	db.setDatabaseName(databaseName);
+	db.setUserName(username);
+	db.setPassword(password);
+
+	if (!db.open())
+	{
+		qDebug() << "Open datatabase error:" << db.lastError().text();
+		return QSqlDatabase();
+	}
+
+	return db;
+}
+
+void ConnectionPool::releaseThreadPool()
+{
+	auto _tid = QThread::currentThreadId();
+	ConnectionPool* instance = nullptr;
+	int _itid = reinterpret_cast<int>(_tid);
+
+	QMutexLocker locker(&g_thread_mutex);
+	auto itr = g_thread_instances.find(_itid);
+	if (itr != g_thread_instances.end())
+	{
+		auto _tmp = itr->second;
+		g_thread_instances.erase(itr);
+		delete _tmp;
+		_tmp = nullptr;
+	}
 }
