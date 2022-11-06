@@ -8,80 +8,63 @@
     }
   },
   "SQL": {
-    "MySQL": {
-      "SQLDriver": "MySQL",
-      "Host": "127.0.0.1",
-      "Port": "3306",
-      "UserName": "Test",
-      "Password": "AJK8d9sfjc90sd8f9cxSJD@09^8d#N*&DFDJDNDaJJJdsf090905",
-      "DataBase": "Test"
+    "CPAS_DEV": {
+      "SQLDriver": "MSSQL",
+      "Host": "172.28.99.74",
+      "Port": "1433",
+      "UserName": "svc_portal_crm",
+      "Password": "K97a1pBsvGk8xly6U",
+      "DataBase": "CAPS_DEV"
     },
-    "SQLite": {
-      "SQLDriver": "SQLite",
-      "DBFilePath": "..\\SimpleServers.db"
-    },
-    "SQLServer": {
-      "SQLDriver": "SQLServer",
-      "Host": "127.0.0.1",
-      "Port": "3306",
-      "UserName": "Test",
-      "Password": "AJK8d9sfjc90sd8f9cxSJD@09^8d#N*&DFDJDNDaJJJdsf090905",
-      "DataBase": "Test"
+    "CPAS_UAT": {
+      "SQLDriver": "MSSQL",
+      "Host": "172.25.99.75",
+      "Port": "1433",
+      "UserName": "svc_portal_crm",
+      "Password": "K97a1pBsvGk8xly6U",
+      "DataBase": "CAPS_UAT"
     }
   },
   "SimpleServers": {
-    "Default": {
-      "SimpleServerIpAddress": "10.11.12.6",
-      "SimpleServerPort": "8080",
-      "SimpleServerLogLevel": "1",
-      "Controllers": {
-        "/login": {
-          "Method": "POST",
-          "SQL": "MySQL",
-          "Parameters": "UserName, Password",
-          "SqlQuery": "call test.sp_TestLogin {0}, {1}"
-        }
-      }
-    },
     "vueWebServer": {
-      "SimpleServerIpAddress": "10.11.12.6",
+      "SimpleServerIpAddress": "127.0.0.1",
       "SimpleServerPort": "18080",
       "SimpleServerLogLevel": "1",
       "Controllers": {
-        "/captchaImage": {
-          "Methods": "POST, GET",
-          "data": {
-            "GUID1": "{GUID}",
-            "Resource": "..\\Resource\\17.gif",
-            "Captcha": {
-              "{CaptchaImage}": {
-                "image": "{CaptchaImage}",
-                "result": "{CaptchaImageResult}"
-              },
-              "ID": "{GUID}"
+        "/DEV": {
+          "Methods": "GET, POST",
+          "Parameters": {},
+          "SQL": {
+            "SQL1": {
+              "SqlName": "CPAS_DEV",
+              "SqlQuery": "Select TOP 1 * From tblConfig",
+              "data": {
+                "result": "{SqlResult}"
+              }
             }
           },
-          "SQL": "SQLite",
-          "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ('{GUID}','{Captcha.result}')",
+          "data": {
+            "GUID": "{GUID}{GUID}"
+          },
           "Response": {
-            "image": "{Resource}",
-            "UUID": "{GUID1}{GUID1}",
-            "CaptchaImage": "{Captcha.image}",
-            "ID": "{Captcha.ID}"
+            "result": "{result}",
+            "GUID": "{GUID}{GUID}"
           }
         },
-        "/login": {
-          "Method": "POST",
-          "Parameters": {
-            "UserName": null,
-            "Password": "{MD5}"
-          },
+        "/UAT": {
+          "Methods": "POST",
+          "Parameters": {},
           "SQL": {
-            "SQLName":"SQLite",
-            "SqlQuery": "SELECT count(*) AS RESULT FROM tblSimpleServers WHERE UserName = {UserName} AND Password = {Password}",
-            "data": {
-              "result": "{SqlResult}"
+            "SQL1": {
+              "SqlName": "CPAS_UAT",
+              "SqlQuery": "Select TOP 1 * From tblConfig",
+              "data": {
+                "result": "{SqlResult}"
+              }
             }
+          },
+          "data": {
+            "result": "{SQL1.result}"
           },
           "Response": {
             "result": "{result}"

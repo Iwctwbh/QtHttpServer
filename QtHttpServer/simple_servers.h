@@ -11,6 +11,7 @@
 //#include "qt_common_tools.h"
 #include "common_tools.h"
 #include "mysql.h"
+#include "connection_pool_simple.h"
 
 class SimpleServers final : public QObject
 {
@@ -67,6 +68,7 @@ public:
 	void InitSQL();
 
 	void InitSimpleServers(const QJsonObject& arg_json_object);
+	void init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql);
 	void Run();
 
 	void emit_run();
@@ -79,6 +81,9 @@ private:
 	QMap<QString, Mysql> hash_sql_{};
 	// Mysql sql_;
 	Mysql sql_server{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
+
+	QMap<QString, ConnectionPoolSimple::StructSqlServer> map_sql_servers_;
+	QJsonObject json_object_sql_servers_;
 };
 
 #endif  // SIMPLE_SERVERS_H

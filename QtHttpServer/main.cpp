@@ -3,6 +3,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtSql>
 
+#include "connection_pool_simple.h"
 #include "mysql.h"
 #include "simple_servers.h"
 
@@ -29,7 +30,7 @@ int main(int argc, char* argv[])
 				error_json_parse.error == QJsonParseError::NoError && json_document_simple_server_file.isObject())
 			{
 #pragma region SQL
-				QJsonObject json_object_SQL{
+				QJsonObject json_object_sql{
 					json_document_simple_server_file.object()
 					                                .value("SQL")
 					                                .toObject()
@@ -42,7 +43,7 @@ int main(int argc, char* argv[])
 					                                .value("SimpleServers")
 					                                .toObject()
 				};
-				std::ranges::for_each(json_object_simple_servers.keys(), [&json_object_simple_servers](const QJsonValue& temp_json_key)
+				std::ranges::for_each(json_object_simple_servers.keys(), [&](const QJsonValue& temp_json_key)
 				{
 					// QThread
 					const auto thread_simple_servers = new QThread();
@@ -50,6 +51,7 @@ int main(int argc, char* argv[])
 
 					simple_servers->InitSimpleServers(json_object_simple_servers.value(temp_json_key.toString())
 					                                                            .toObject());
+					simple_servers->init_sql_connect_by_json_object(json_object_sql);
 					simple_servers->moveToThread(thread_simple_servers);
 					thread_simple_servers->start();
 					QObject::connect(simple_servers, &SimpleServers::signal_run,

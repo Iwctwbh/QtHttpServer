@@ -7,7 +7,7 @@
 #include <QCoreApplication>
 
 // 获取数据库连接
-QSqlDatabase ConnectionPoolSimple::openConnection(const QString& connectionName)
+QSqlDatabase ConnectionPoolSimple::openConnection(StructSqlServer arg_struct_sql_server)
 {
 	// 1. 创建连接的全名: 基于线程的地址和传入进来的 connectionName，因为同一个线程可能申请创建多个数据库连接
 	// 2. 如果连接已经存在，复用它，而不是重新创建
@@ -17,7 +17,7 @@ QSqlDatabase ConnectionPoolSimple::openConnection(const QString& connectionName)
 
 	// [1] 创建连接的全名: 基于线程的地址和传入进来的 connectionName，因为同一个线程可能申请创建多个数据库连接
 	QString baseConnectionName = "conn_" + QString::number(quint64(QThread::currentThread()), 16);
-	QString fullConnectionName = baseConnectionName + connectionName;
+	QString fullConnectionName = baseConnectionName + arg_struct_sql_server.connection_name;
 
 	if (QSqlDatabase::contains(fullConnectionName))
 	{
@@ -53,42 +53,49 @@ QSqlDatabase ConnectionPoolSimple::openConnection(const QString& connectionName)
 			}
 		});
 	}
-
-	return createConnection(fullConnectionName);
+	arg_struct_sql_server.connection_name = fullConnectionName;
+	return createConnection(arg_struct_sql_server);
 }
 
 // 创建数据库连接
-QSqlDatabase ConnectionPoolSimple::createConnection(const QString& connectionName)
+QSqlDatabase ConnectionPoolSimple::createConnection(const StructSqlServer& arg_struct_sql_server)
 {
 	static int sn = 0;
 
-	// 创建一个新的数据库连接
-	/*QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", connectionName);
-	db.setHostName("localhost");
-	db.setDatabaseName("qt");
-	db.setUserName("root");
-	db.setPassword("root");*/
-
-	QSqlDatabase db = QSqlDatabase::addDatabase("QODBC", connectionName);
-	db.setDatabaseName(QString("DRIVER={SQL SERVER};"
-			"SERVER=%1;" //服务器名称
-			"DATABASE=%2;" //数据库名
-			"UID=%3;" //登录名
-			"PWD=%4;" //密码
-			"SQL_ATTR_CONNECTION_POOLING=SQL_CP_ONE_PER_HENV;"
-			"SQL_ATTR_ODBC_VERSION=SQL_OV_ODBC3;"
-		).arg("172.28.99.74,1433") //默认的sqlserver的端口号是1433
-		 .arg("CAPS_DEV")
-		 .arg("svc_portal_crm")
-		 .arg("K97a1pBsvGk8xly6U") //填写你的sa账号的密码！！！！！！！！！！！！
-	);
-	db.setConnectOptions("SQL_ATTR_CONNECTION_POOLING=SQL_CP_ONE_PER_HENV;SQL_ATTR_ODBC_VERSION=SQL_OV_ODBC3;");
-
-	if (db.open())
+	if (const auto& [connection_name,sql_driver, host, port, user_name, password, data_base]{arg_struct_sql_server};
+		!sql_driver.compare("MSSQL", Qt::CaseInsensitive))
 	{
-		qDebug().noquote() << QString("Connection created: %1, sn: %2").arg(connectionName).arg(++sn);
-		return db;
+		QSqlDatabase db = QSqlDatabase::addDatabase("QODBC", connection_name);
+		db.setDatabaseName(QString("DRIVER={SQL SERVER};"
+				"SERVER=%1;" //服务器名称
+				"DATABASE=%2;" //数据库名
+				"UID=%3;" //登录名
+				"PWD=%4;" //密码
+				"SQL_ATTR_CONNECTION_POOLING=SQL_CP_ONE_PER_HENV;"
+				"SQL_ATTR_ODBC_VERSION=SQL_OV_ODBC3;"
+			).arg(host + ',' + port) //默认的sqlserver的端口号是1433
+			 .arg(data_base)
+			 .arg(user_name)
+			 .arg(password) //填写你的sa账号的密码！！！！！！！！！！！！
+		);
+		db.setConnectOptions("SQL_ATTR_CONNECTION_POOLING=SQL_CP_ONE_PER_HENV;SQL_ATTR_ODBC_VERSION=SQL_OV_ODBC3;");
+
+		if (db.open())
+		{
+			qDebug().noquote() << QString("Connection created: %1, sn: %2").arg(connection_name).arg(++sn);
+			return db;
+		}
+		qDebug().noquote() << "Create connection error:" << db.lastError().text();
 	}
-	qDebug().noquote() << "Create connection error:" << db.lastError().text();
+	else if (!sql_driver.compare("MYSQL"))
+	{
+		// 创建一个新的数据库连接
+		/*QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", connectionName);
+		db.setHostName("localhost");
+		db.setDatabaseName("qt");
+		db.setUserName("root");
+		db.setPassword("root");*/
+	}
+
 	return QSqlDatabase();
 }

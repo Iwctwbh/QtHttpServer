@@ -1,7 +1,5 @@
 ﻿#include "simple_servers.h"
 
-#include "connection_pool_simple.h"
-
 SimpleServers::SimpleServers(QObject* parent) : QObject(parent)
 {
 }
@@ -30,46 +28,47 @@ void SimpleServers::InitSimpleServers(const QJsonObject& arg_json_object)
 	json_object_simple_server_ = arg_json_object;
 }
 
+void SimpleServers::init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql_servers)
+{
+	json_object_sql_servers_ = arg_json_object_sql_servers;
+	for (QJsonObject::const_iterator it = json_object_sql_servers_.constBegin(); it != json_object_sql_servers_.constEnd(); ++it)
+	{
+		QJsonObject temp_json_object_sql = it.value().toObject();
+		ConnectionPoolSimple::StructSqlServer temp_sql_server
+		{
+			it.key(),
+			temp_json_object_sql.value("SQLDriver").toString(),
+			temp_json_object_sql.value("Host").toString(),
+			temp_json_object_sql.value("Port").toString(),
+			temp_json_object_sql.value("UserName").toString(),
+			temp_json_object_sql.value("Password").toString(),
+			temp_json_object_sql.value("DataBase").toString()
+		};
+
+		map_sql_servers_.insert(it.key(), temp_sql_server);
+	}
+}
+
 void SimpleServers::Run()
 {
 	// InitSQL();
-	const QJsonObject json_object_simple_server = json_object_simple_server_;
 
 	LogHelperHandler handler_log_helper{};
 	crow::logger::setHandler(&handler_log_helper);
 
 	crow::App<SimpleServerMiddleware> simple_app_crow{};
-	simple_app_crow.loglevel(static_cast<crow::LogLevel>(json_object_simple_server.value("SimpleServerLogLevel").toString().toInt()));
+	simple_app_crow.loglevel(static_cast<crow::LogLevel>(json_object_simple_server_.value("SimpleServerLogLevel").toString().toInt()));
 
 	// CROW_CATCHALL_ROUTE(simple_app_crow);
-	const QJsonObject json_object_controllers{json_object_simple_server.value("Controllers").toObject()};
+	const QJsonObject json_object_controllers{json_object_simple_server_.value("Controllers").toObject()};
 	simple_app_crow.catchall_route()([&](const crow::request& request_request)
 	{
 		crow::response response_response{};
 		response_response.code = 200;
 		response_response.body = "";
-		//QSqlQuery query_Sql = sql_server.QueryExec("SELECT TOP 1 * FROM tblConfig");
 
-		// [1] 从数据库连接池里取得连接
-		QSqlDatabase db = ConnectionPoolSimple::openConnection();
-
-		// [2] 使用连接查询数据库
-		QSqlQuery query(db);
-
-		query.setForwardOnly(true);
-		query.exec("SELECT TOP 1 * FROM tblConfig");
-		QJsonArray JsonArray_Temp;
-
-		while (query.next())
-		{
-			for (int x{0}; x < query.record().count(); ++x)
-			{
-				JsonArray_Temp.push_back(QJsonObject{{query.record().fieldName(x), QJsonValue::fromVariant(query.value(x))}});
-			}
-		}
-
-		response_response.body = QJsonDocument{JsonArray_Temp}.toJson();
-		return response_response;
+		//response_response.body = QJsonDocument{JsonArray_Temp}.toJson();
+		//return response_response;
 
 		if (!json_object_controllers.contains(request_request.url.data()))
 		{
@@ -166,9 +165,52 @@ void SimpleServers::Run()
 													QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage())};
 													copy_string_value.replace(temp_regex_match.captured(), bytearray_base64);
 												}
+												else if (bytearray_data.indexOf('.') != -1)
+												{
+													QByteArrayList bytearray_list_sql_name{QByteArrayList::fromList(bytearray_data.replace('{', "").replace('}', "").split('.'))};
+													if (QJsonObject json_object_sql_servers{json_object_controller.value("SQL").toObject()}; json_object_sql_servers.contains(bytearray_list_sql_name.first()))
+													{
+														const QJsonObject temp_json_object_sql{json_object_sql_servers.value(bytearray_list_sql_name.first()).toObject()};
+
+														// [1] 从数据库连接池里取得连接
+														QSqlDatabase db = ConnectionPoolSimple::openConnection(map_sql_servers_.value(temp_json_object_sql.value("SqlName").toString()));
+
+														// [2] 使用连接查询数据库
+														QSqlQuery query(db);
+
+														query.setForwardOnly(true);
+														query.exec(temp_json_object_sql.value("SqlQuery").toString());
+														QJsonArray json_array_temp{};
+
+														while (query.next())
+														{
+															for (int x{0}; x < query.record().count(); ++x)
+															{
+																json_array_temp.push_back(QJsonObject{{query.record().fieldName(x), QJsonValue::fromVariant(query.value(x))}});
+															}
+														}
+														copy_string_value.replace(temp_regex_match.captured(), QJsonDocument{json_array_temp}.toJson());
+													}
+												}
 											}
 										}
-										arg_json_object_child.insert(temp_bytearray_child_key, copy_string_value);
+										QJsonParseError error_json_parse{QJsonParseError::NoError};
+										const QJsonDocument json_document_copy_string_value{QJsonDocument::fromJson(copy_string_value.toLocal8Bit(), &error_json_parse)};
+										if (error_json_parse.error == QJsonParseError::NoError)
+										{
+											if (json_document_copy_string_value.isArray())
+											{
+												arg_json_object_child.insert(temp_bytearray_child_key, json_document_copy_string_value.array());
+											}
+											else if (json_document_copy_string_value.isObject())
+											{
+												arg_json_object_child.insert(temp_bytearray_child_key, json_document_copy_string_value.object());
+											}
+										}
+										else
+										{
+											arg_json_object_child.insert(temp_bytearray_child_key, copy_string_value);
+										}
 									}
 								}
 							});
@@ -213,11 +255,38 @@ void SimpleServers::Run()
 								}
 								if (bool_is_success)
 								{
-									temp_string_value.replace(temp_regex_match.captured(), copy_json_object_data.value(out_temp_string).toString());
+									if (copy_json_object_data.value(out_temp_string).isObject())
+									{
+										temp_string_value.replace(temp_regex_match.captured(), QJsonDocument{copy_json_object_data.value(out_temp_string).toObject()}.toJson());
+									}
+									else if (copy_json_object_data.value(out_temp_string).isArray())
+									{
+										temp_string_value.replace(temp_regex_match.captured(), QJsonDocument{copy_json_object_data.value(out_temp_string).toArray()}.toJson());
+									}
+									else
+									{
+										temp_string_value.replace(temp_regex_match.captured(), copy_json_object_data.value(out_temp_string).toString());
+									}
 								}
 							}
-							json_object_response.insert(temp_string_key,
-							                            temp_string_value);
+							//json_object_response.insert(temp_string_key, temp_string_value);
+							QJsonParseError error_json_parse{QJsonParseError::NoError};
+							const QJsonDocument json_document_copy_string_value{QJsonDocument::fromJson(temp_string_value.toLocal8Bit(), &error_json_parse)};
+							if (error_json_parse.error == QJsonParseError::NoError)
+							{
+								if (json_document_copy_string_value.isArray())
+								{
+									json_object_response.insert(temp_string_key, json_document_copy_string_value.array());
+								}
+								else if (json_document_copy_string_value.isObject())
+								{
+									json_object_response.insert(temp_string_key, json_document_copy_string_value.object());
+								}
+							}
+							else
+							{
+								json_object_response.insert(temp_string_key, temp_string_value);
+							}
 						});
 					}
 					response_response.body = static_cast<std::string>(QJsonDocument{json_object_response}.toJson());
@@ -228,13 +297,13 @@ void SimpleServers::Run()
 	});
 
 	auto sync_app_crow =
-		simple_app_crow.bindaddr(json_object_simple_server.value("SimpleServerIpAddress")
-		                                                  .toString()
-		                                                  .toLocal8Bit()
-		                                                  .data())
-		               .port(json_object_simple_server.value("SimpleServerPort")
-		                                              .toString()
-		                                              .toUInt())
+		simple_app_crow.bindaddr(json_object_simple_server_.value("SimpleServerIpAddress")
+		                                                   .toString()
+		                                                   .toLocal8Bit()
+		                                                   .data())
+		               .port(json_object_simple_server_.value("SimpleServerPort")
+		                                               .toString()
+		                                               .toUInt())
 		               .multithreaded()
 		               .run_async();
 }
