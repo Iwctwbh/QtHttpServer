@@ -184,10 +184,12 @@ void SimpleServers::Run()
 
 														while (query.next())
 														{
+															QJsonObject temp_json_object{};
 															for (int x{0}; x < query.record().count(); ++x)
 															{
-																json_array_temp.push_back(QJsonObject{{query.record().fieldName(x), QJsonValue::fromVariant(query.value(x))}});
+																temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
 															}
+															json_array_temp.push_back(temp_json_object);
 														}
 														copy_string_value.replace(temp_regex_match.captured(), QJsonDocument{json_array_temp}.toJson());
 													}
