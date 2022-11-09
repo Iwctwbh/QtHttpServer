@@ -3,8 +3,6 @@
 #define COMMON_TOOLS_H
 
 #include <QtCore/QtCore>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
 class CommonTools

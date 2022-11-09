@@ -3,15 +3,12 @@
 #define SIMPLE_SERVERS_H
 
 #include <crow.h>
-
 #include <QtCore/QtCore>
-#include <QtSql>
+#include <QtSql/QtSql>
 
-#include "log_helper_handler.h"
-//#include "qt_common_tools.h"
 #include "common_tools.h"
-#include "mysql.h"
 #include "connection_pool_simple.h"
+#include "log_helper_handler.h"
 
 class SimpleServers final : public QObject
 {
@@ -29,17 +26,6 @@ public:
 		QJsonObject json_object_response{};
 	};
 
-	/*static std::vector<QByteArray> GetVectorMethodStrings()
-	{
-	        std::vector<QByteArray> list_method_strings{};
-	        std::ranges::for_each(crow::method_strings, [&](const char
-	*temp_ptr_char)
-	        {
-	                list_method_strings.emplace_back(temp_ptr_char);
-	        });
-	        return list_method_strings;
-	}*/
-
 	struct SimpleServerMiddleware : crow::ILocalMiddleware
 	{
 		QString string_message{};
@@ -53,7 +39,7 @@ public:
 		{
 		};
 
-		void before_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/) const
+		void before_handle(crow::request& /*req*/, crow::response& /*res*/, context& /*ctx*/)
 		{
 			// CROW_LOG_DEBUG << " - MESSAGE: " << string_message;
 		}
@@ -78,9 +64,6 @@ signals:
 
 private:
 	QJsonObject json_object_simple_server_{};
-	QMap<QString, Mysql> hash_sql_{};
-	// Mysql sql_;
-	Mysql sql_server{"QODBC", "172.28.99.74", 1433, "CAPS_DEV", "svc_portal_crm", "K97a1pBsvGk8xly6U", "db1"};
 
 	QMap<QString, ConnectionPoolSimple::StructSqlServer> map_sql_servers_;
 	QJsonObject json_object_sql_servers_;

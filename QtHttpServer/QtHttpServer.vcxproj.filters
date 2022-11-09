@@ -22,9 +22,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mysql.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="simple_servers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,9 +36,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mysql.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="log_helper_handler.h">
       <Filter>Header Files</Filter>
     </ClInclude>

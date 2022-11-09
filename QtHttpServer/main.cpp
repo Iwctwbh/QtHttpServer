@@ -4,14 +4,11 @@
 #include <QtSql>
 
 #include "connection_pool_simple.h"
-#include "mysql.h"
 #include "simple_servers.h"
 
 #pragma execution_character_set("utf-8")
 
 //#pragma comment(lib, "QtCommonTools.lib")
-
-Mysql* mysql;
 
 int main(int argc, char* argv[])
 {
