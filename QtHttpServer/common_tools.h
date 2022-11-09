@@ -14,6 +14,16 @@ public:
 	static cv::Mat CreateCaptchaImage(std::string* out_string_result = nullptr);
 	static QByteArray ConvertMatToBase64(const cv::Mat& arg_mat_image);
 
+	/**
+	* @param arg_json_object
+	* 被插入的Json Object
+	* @param arg_string_key
+	* 被插入的key
+	* @param arg_json_value
+	* 待插入的value
+	*/
+	static void InsertJsonValueToJsonObject(QJsonObject& arg_json_object, const QString& arg_string_key, const QJsonValue& arg_json_value);
+
 private:
 	static void MergeImage(cv::Mat& src, cv::Mat& dst);
 };

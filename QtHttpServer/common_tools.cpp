@@ -119,3 +119,19 @@ QByteArray CommonTools::ConvertMatToBase64(const cv::Mat& arg_mat_image)
 	const QByteArray bytearray_mat_stream = QByteArray::fromRawData(reinterpret_cast<const char*>(buffer.data()), buffer.size());
 	return bytearray_mat_stream.toBase64();
 }
+
+void CommonTools::InsertJsonValueToJsonObject(QJsonObject& arg_json_object, const QString& arg_string_key, const QJsonValue& arg_json_value)
+{
+	if (arg_json_value.isObject())
+	{
+		arg_json_object.insert(arg_string_key, arg_json_value.toObject());
+	}
+	else if (arg_json_value.isArray())
+	{
+		arg_json_object.insert(arg_string_key, arg_json_value.toArray());
+	}
+	else
+	{
+		arg_json_object.insert(arg_string_key, arg_json_value);
+	}
+}

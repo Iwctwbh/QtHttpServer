@@ -49,7 +49,7 @@ void SimpleServers::init_sql_connect_by_json_object(const QJsonObject& arg_json_
 	}
 }
 
-void SimpleServers::Run()
+void SimpleServers::Run() const
 {
 	// InitSQL();
 
@@ -66,9 +66,6 @@ void SimpleServers::Run()
 		crow::response response_response{};
 		response_response.code = 200;
 		response_response.body = "";
-
-		//response_response.body = QJsonDocument{JsonArray_Temp}.toJson();
-		//return response_response;
 
 		if (!json_object_controllers.contains(request_request.url.data()))
 		{
@@ -123,10 +120,6 @@ void SimpleServers::Run()
 									{
 										QJsonObject json_object_child_value = arg_json_object_child.value(temp_bytearray_child_key).toObject();
 										function_resolve_data_mapping(arg_json_object_child, json_object_child_value);
-										/*std::ranges::for_each(json_object_child_value.keys(), [&](const QString& temp_string_key)-> void
-										{
-											arg_json_object_child.insert(temp_bytearray_child_key, json_object_child_value.value(temp_string_key));
-										});*/
 										arg_json_object_child.insert(temp_bytearray_child_key, json_object_child_value);
 									}
 									else
@@ -134,93 +127,64 @@ void SimpleServers::Run()
 										QString copy_string_value{arg_json_object_child.value(temp_bytearray_child_key).toString()};
 										for (const QRegularExpressionMatch& temp_regex_match : regexp.globalMatch(copy_string_value))
 										{
-											if (QJsonValue json_value_data{arg_json_object_child.value(temp_bytearray_child_key)};
-												json_value_data.isObject())
+											QByteArray bytearray_data{arg_json_object_child.value(temp_bytearray_child_key).toString().toLocal8Bit()};
+
+											if (const QFile temp_file{bytearray_data};
+												temp_file.exists())
 											{
-												//QJsonObject temp_json_object_child_child{json_value_data.toObject()};
-												//function_resolve_data_mapping(arg_json_object_child, temp_json_object_child_child);
-												//arg_json_object_child.insert(temp_bytearray_child_key, temp_json_object_child_child);
+												if (const QMimeType temp_mimetype{QMimeDatabase{}.mimeTypeForFile(bytearray_data)};
+													temp_mimetype.name().startsWith("image/"))
+												{
+													copy_string_value.replace(temp_regex_match.captured(), CommonTools::ConvertImgToBase64(bytearray_data));
+												}
 											}
-											else
+											else if (!bytearray_data.compare("{GUID}") || !bytearray_data.compare("{UUID}"))
 											{
-												QByteArray bytearray_data{json_value_data.toString().toLocal8Bit()};
-
-												if (const QFile temp_file{bytearray_data};
-													temp_file.exists())
+												QUuid uuid_uuid{QUuid::createUuid()};
+												QString string_base_data{request_request.remote_ip_address.data()};
+												copy_string_value.replace(temp_regex_match.captured(), QUuid::createUuidV5(uuid_uuid, string_base_data).toString());
+											}
+											else if (!bytearray_data.compare("{CaptchaImage}"))
+											{
+												QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage())};
+												copy_string_value.replace(temp_regex_match.captured(), bytearray_base64);
+											}
+											else if (bytearray_data.indexOf('.') != -1)
+											{
+												QByteArrayList bytearray_list_sql_name{QByteArrayList::fromList(bytearray_data.replace('{', "").replace('}', "").split('.'))};
+												if (QJsonObject json_object_sql_servers{json_object_controller.value("SQL").toObject()}; json_object_sql_servers.contains(bytearray_list_sql_name.first()))
 												{
-													if (const QMimeType temp_mimetype{QMimeDatabase{}.mimeTypeForFile(bytearray_data)};
-														temp_mimetype.name().startsWith("image/"))
+													const QJsonObject temp_json_object_sql{json_object_sql_servers.value(bytearray_list_sql_name.first()).toObject()};
+
+													// [1] 从数据库连接池里取得连接
+													QSqlDatabase db = ConnectionPoolSimple::openConnection(map_sql_servers_.value(temp_json_object_sql.value("SqlName").toString()));
+
+													// [2] 使用连接查询数据库
+													QSqlQuery query(db);
+
+													query.setForwardOnly(true);
+													query.exec(temp_json_object_sql.value("SqlQuery").toString());
+													QJsonArray json_array_temp{};
+
+													while (query.next())
 													{
-														copy_string_value.replace(temp_regex_match.captured(), CommonTools::ConvertImgToBase64(bytearray_data));
-													}
-												}
-												else if (!bytearray_data.compare("{GUID}") || !bytearray_data.compare("{UUID}"))
-												{
-													QUuid uuid_uuid{QUuid::createUuid()};
-													QString string_base_data{request_request.remote_ip_address.data()};
-													copy_string_value.replace(temp_regex_match.captured(), QUuid::createUuidV5(uuid_uuid, string_base_data).toString());
-												}
-												else if (!bytearray_data.compare("{CaptchaImage}"))
-												{
-													QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage())};
-													copy_string_value.replace(temp_regex_match.captured(), bytearray_base64);
-												}
-												else if (bytearray_data.indexOf('.') != -1)
-												{
-													QByteArrayList bytearray_list_sql_name{QByteArrayList::fromList(bytearray_data.replace('{', "").replace('}', "").split('.'))};
-													if (QJsonObject json_object_sql_servers{json_object_controller.value("SQL").toObject()}; json_object_sql_servers.contains(bytearray_list_sql_name.first()))
-													{
-														const QJsonObject temp_json_object_sql{json_object_sql_servers.value(bytearray_list_sql_name.first()).toObject()};
-
-														// [1] 从数据库连接池里取得连接
-														QSqlDatabase db = ConnectionPoolSimple::openConnection(map_sql_servers_.value(temp_json_object_sql.value("SqlName").toString()));
-
-														// [2] 使用连接查询数据库
-														QSqlQuery query(db);
-
-														query.setForwardOnly(true);
-														query.exec(temp_json_object_sql.value("SqlQuery").toString());
-														QJsonArray json_array_temp{};
-
-														while (query.next())
+														QJsonObject temp_json_object{};
+														for (int x{0}; x < query.record().count(); ++x)
 														{
-															QJsonObject temp_json_object{};
-															for (int x{0}; x < query.record().count(); ++x)
-															{
-																temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
-															}
-															json_array_temp.push_back(temp_json_object);
+															temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
 														}
-														copy_string_value.replace(temp_regex_match.captured(), QJsonDocument{json_array_temp}.toJson());
+														json_array_temp.push_back(temp_json_object);
 													}
+													copy_string_value.replace(temp_regex_match.captured(), QJsonDocument{json_array_temp}.toJson());
 												}
 											}
 										}
-										QJsonParseError error_json_parse{QJsonParseError::NoError};
-										const QJsonDocument json_document_copy_string_value{QJsonDocument::fromJson(copy_string_value.toLocal8Bit(), &error_json_parse)};
-										if (error_json_parse.error == QJsonParseError::NoError)
-										{
-											if (json_document_copy_string_value.isArray())
-											{
-												arg_json_object_child.insert(temp_bytearray_child_key, json_document_copy_string_value.array());
-											}
-											else if (json_document_copy_string_value.isObject())
-											{
-												arg_json_object_child.insert(temp_bytearray_child_key, json_document_copy_string_value.object());
-											}
-										}
-										else
-										{
-											arg_json_object_child.insert(temp_bytearray_child_key, copy_string_value);
-										}
+										CommonTools::InsertJsonValueToJsonObject(arg_json_object_child, temp_bytearray_child_key, copy_string_value);
 									}
 								}
 							});
 						};
 						function_resolve_data_mapping(json_object_controller, json_object_data);
-
-						// SQL
-						// QJsonObject json_object_SQL{json_object_controller.value("SQL").toObject()};
 
 						std::ranges::for_each(json_object_response.keys(), [&](const QString& temp_string_key) -> void
 						{
@@ -271,24 +235,7 @@ void SimpleServers::Run()
 									}
 								}
 							}
-							//json_object_response.insert(temp_string_key, temp_string_value);
-							QJsonParseError error_json_parse{QJsonParseError::NoError};
-							const QJsonDocument json_document_copy_string_value{QJsonDocument::fromJson(temp_string_value.toLocal8Bit(), &error_json_parse)};
-							if (error_json_parse.error == QJsonParseError::NoError)
-							{
-								if (json_document_copy_string_value.isArray())
-								{
-									json_object_response.insert(temp_string_key, json_document_copy_string_value.array());
-								}
-								else if (json_document_copy_string_value.isObject())
-								{
-									json_object_response.insert(temp_string_key, json_document_copy_string_value.object());
-								}
-							}
-							else
-							{
-								json_object_response.insert(temp_string_key, temp_string_value);
-							}
+							CommonTools::InsertJsonValueToJsonObject(json_object_response, temp_string_key, temp_string_value);
 						});
 					}
 					response_response.body = static_cast<std::string>(QJsonDocument{json_object_response}.toJson());

@@ -68,8 +68,8 @@ public:
 	void InitSQL();
 
 	void InitSimpleServers(const QJsonObject& arg_json_object);
-	void init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql);
-	void Run();
+	void init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql_servers);
+	void Run() const;
 
 	void emit_run();
 
