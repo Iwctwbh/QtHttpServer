@@ -8,21 +8,21 @@
     }
   },
   "SQL": {
-    "CPAS_DEV": {
+    "SQLite": {
       "SQLDriver": "MSSQL",
-      "Host": "172.28.99.74",
+      "Host": "xxx.xx.xxx.xxx",
       "Port": "1433",
-      "UserName": "svc_portal_crm",
-      "Password": "K97a1pBsvGk8xly6U",
-      "DataBase": "CAPS_DEV"
+      "UserName": "username",
+      "Password": "password",
+      "DataBase": "database"
     },
-    "CPAS_UAT": {
+    "MSSQL": {
       "SQLDriver": "MSSQL",
-      "Host": "172.25.99.75",
+      "Host": "xxx.xx.xxx.xxx",
       "Port": "1433",
-      "UserName": "svc_portal_crm",
-      "Password": "K97a1pBsvGk8xly6U",
-      "DataBase": "CAPS_UAT"
+      "UserName": "username",
+      "Password": "password",
+      "DataBase": "database"
     }
   },
   "SimpleServers": {
@@ -31,43 +31,42 @@
       "SimpleServerPort": "18080",
       "SimpleServerLogLevel": "1",
       "Controllers": {
-        "/DEV": {
-          "Methods": "GET, POST",
-          "Parameters": {},
-          "SQL": {
-            "SQL1": {
-              "SqlName": "CPAS_DEV",
-              "SqlQuery": "Select TOP 1 * From tblConfig",
-              "data": {
-                "result": "{SqlResult}"
-              }
-            }
-          },
-          "data": {
-            "GUID": "{GUID}{GUID}"
-          },
-          "Response": {
-            "result": "{result}",
-            "GUID": "{GUID}{GUID}"
-          }
-        },
-        "/UAT": {
+        "/captchaImage": {
           "Methods": "POST",
           "Parameters": {},
+          "data": {
+            "GUID": "{GUID}",
+            "image": "{CaptchaImage}"
+          },
+          "Response": {
+            "img": "{image}",
+            "captchaEnabled": "true"
+          }
+        },
+        "/Login": {
+          "Methods": "POST",
+          "Parameters": {
+            "username": "",
+            "password": "",
+            "code": "",
+            "uuid": ""
+          },
           "SQL": {
             "SQL1": {
-              "SqlName": "CPAS_UAT",
-              "SqlQuery": "Select TOP 1 * From tblConfig",
+              "SqlName": "SQLite",
+              "SqlQuery": "SELECT COUNT(*) FROM tblUser WHERE UserName = {Parameters.username} AND Password = {Parameters.password}",
               "data": {
                 "result": "{SqlResult}"
               }
             }
           },
           "data": {
-            "result": "{SQL1.result}"
+            "GUID": "{GUID}",
+            "image": "{CaptchaImage}"
           },
           "Response": {
-            "result": "{result}"
+            "img": "{image}",
+            "captchaEnabled": "true"
           }
         }
       }

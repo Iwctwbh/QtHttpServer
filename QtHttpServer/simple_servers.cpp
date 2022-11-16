@@ -142,6 +142,8 @@ void SimpleServers::Run() const
 
 													// [2] 使用连接查询数据库
 													QSqlQuery query(db);
+													query.prepare(temp_json_object_sql.value("SqlQuery").toString());
+													query.bindValue("{}", "");
 
 													query.setForwardOnly(true);
 													query.exec(temp_json_object_sql.value("SqlQuery").toString());
@@ -241,4 +243,69 @@ void SimpleServers::Run() const
 void SimpleServers::emit_run()
 {
 	emit signal_run();
+}
+
+Controllers::Controllers(const QJsonObject& arg_json_object)
+{
+	for (auto it = arg_json_object.constBegin(); it != arg_json_object.constEnd(); ++it)
+	{
+		controllers_.insert(it.key(), Controller(it.value().toObject()));
+	}
+}
+
+Controller::Controller(const QJsonObject& arg_json_object)
+{
+	// methods
+	std::ranges::for_each(
+		arg_json_object.value("Methods")
+		               .toString()
+		               .toUpper()
+		               .replace(" ", "")
+		               .split(','),
+		[&](const QString& s)
+		{
+			set_methods_.insert(s);
+		});
+
+	// parameters
+	const QJsonObject json_object_parameters = arg_json_object.value("Parameters").toObject();
+	for (auto it = json_object_parameters.constBegin(); it != json_object_parameters.constEnd(); ++it)
+	{
+		hash_parameters_.insert(it.key(), "");
+	}
+
+	// SQL
+	const QJsonObject json_object_sql_servers = arg_json_object.value("SQL").toObject();
+	for (auto it = json_object_sql_servers.constBegin(); it != json_object_sql_servers.constEnd(); ++it)
+	{
+		const QJsonObject json_object_sql = it->toObject();
+		const QJsonObject json_object_sql_data = json_object_sql.value("data").toObject();
+		QHash<QString, QString> hash_data{};
+		for (auto it_data = json_object_sql_data.constBegin(); it_data != json_object_sql_data.constEnd(); ++it_data)
+		{
+			hash_data.insert(it_data.key(), it.value().toString());
+		}
+
+		auto sql = Sql{
+			json_object_sql.value("SqlName").toString(),
+			json_object_sql.value("SqlQuery").toString(),
+			hash_data
+		};
+
+		hash_sql_.insert(it.key(), sql);
+	}
+
+	// data
+	const QJsonObject json_object_data = arg_json_object.value("data").toObject();
+	for (auto it = json_object_data.constBegin(); it != json_object_data.constEnd(); ++it)
+	{
+		map_data_.insert(it.key(), it.value().toString());
+	}
+
+	// Response
+	const QJsonObject json_object_response = arg_json_object.value("Response").toObject();
+	for (auto it = json_object_data.constBegin(); it != json_object_data.constEnd(); ++it)
+	{
+		hash_response_.insert(it.key(), it.value().toString());
+	}
 }

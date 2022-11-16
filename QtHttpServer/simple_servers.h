@@ -20,7 +20,7 @@ public:
 	{
 		// QByteArray *controller;
 		QByteArray method{};
-		QList<QByteArray> list_parameters{};
+		QVector<QByteArray> vector_parameters{};
 		QByteArray bytearray_sql{};
 		QJsonObject json_object_data{};
 		QJsonObject json_object_response{};
@@ -51,8 +51,6 @@ public:
 		}
 	};
 
-	void InitSQL();
-
 	void InitSimpleServers(const QJsonObject& arg_json_object);
 	void init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql_servers);
 	void Run() const;
@@ -67,6 +65,33 @@ private:
 
 	QMap<QString, ConnectionPoolSimple::StructSqlServer> map_sql_servers_;
 	QJsonObject json_object_sql_servers_;
+};
+
+class Controller
+{
+public:
+	explicit Controller(const QJsonObject& arg_json_object);
+private:
+	struct Sql
+	{
+		QString sql_name{};
+		QString sql_query{};
+		QHash<QString, QString> data{};
+	};
+
+	QSet<QString> set_methods_{};
+	QHash<QString, QString> hash_parameters_{};
+	QHash<QString, Sql> hash_sql_{};
+	QMap<QString, QString> map_data_;
+	QHash<QString, QString> hash_response_{};
+};
+
+class Controllers
+{
+public:
+	Controllers(const QJsonObject& arg_json_object);
+private:
+	QHash<QString, Controller> controllers_{};
 };
 
 #endif  // SIMPLE_SERVERS_H

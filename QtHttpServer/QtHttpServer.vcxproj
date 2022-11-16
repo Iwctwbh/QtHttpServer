@@ -157,7 +157,7 @@
   </Target>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties SimpleServer_1json__JsonSchema="https://docs.gradle.com/enterprise/admin/schema/gradle-enterprise-config-schema-5.json" />
+      <UserProperties SimpleServer_1json__JsonSchema="https://appliedengdesign.github.io/cnccodes-json-schema/draft/2022-07/schema" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>
