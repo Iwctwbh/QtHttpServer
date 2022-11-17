@@ -253,7 +253,7 @@ Controllers::Controllers(const QJsonObject& arg_json_object)
 	}
 }
 
-Controller::Controller(const QJsonObject& arg_json_object)
+Controller::Controller(const QJsonObject& arg_json_object, QMap<QString, ConnectionPoolSimple::StructSqlServer> arg_map_sql_servers)
 {
 	// methods
 	std::ranges::for_each(
@@ -299,7 +299,7 @@ Controller::Controller(const QJsonObject& arg_json_object)
 	const QJsonObject json_object_data = arg_json_object.value("data").toObject();
 	for (auto it = json_object_data.constBegin(); it != json_object_data.constEnd(); ++it)
 	{
-		map_data_.insert(it.key(), it.value().toString());
+		hash_data_.insert(it.key(), it.value().toString());
 	}
 
 	// Response
@@ -308,4 +308,79 @@ Controller::Controller(const QJsonObject& arg_json_object)
 	{
 		hash_response_.insert(it.key(), it.value().toString());
 	}
+
+	map_sql_servers_ = arg_map_sql_servers;
+}
+
+QString Controller::GetValue(QString arg_string)
+{
+	if (const QRegularExpression regexp{R"({(.*?)})"};
+		regexp.match(arg_string).hasMatch())
+	{
+		auto list_string = regexp.match(arg_string).captured(1).split('.');
+		if (auto s = list_string.takeFirst(); !s.compare("Sql", Qt::CaseInsensitive))
+		{
+			if (auto v = list_string.takeFirst(); hash_sql_.contains(s))
+			{
+				auto sql = hash_sql_.value(v);
+				if (auto v = list_string.takeFirst(); !v.compare("QSqlResult"))
+				{
+					if (list_string.isEmpty())
+					{
+						// [1] 从数据库连接池里取得连接
+						QSqlDatabase db = ConnectionPoolSimple::openConnection(map_sql_servers_.value(sql.sql_name));
+
+						// [2] 使用连接查询数据库
+						QSqlQuery query(db);
+						query.prepare(sql.sql_query);
+						for (auto iter : regexp.globalMatch(sql.sql_query))
+						{
+							query.bindValue(iter.captured(), GetValue(iter.captured()));
+						}
+						query.setForwardOnly(true);
+						query.exec(sql.sql_query);
+
+						QJsonArray json_array_temp{};
+
+						while (query.next())
+						{
+							QJsonObject temp_json_object{};
+							for (int x{0}; x < query.record().count(); ++x)
+							{
+								temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
+							}
+							json_array_temp.push_back(temp_json_object);
+						}
+						return QJsonDocument{json_array_temp}.toJson();
+					}
+				}
+				else
+				{
+					if (!v.compare("SqlName", Qt::CaseInsensitive))
+					{
+						return sql.sql_name;
+					}
+					if (!v.compare("SqlQuery", Qt::CaseInsensitive))
+					{
+						return sql.sql_query;
+					}
+				}
+			}
+		}
+		else if (!s.compare("data", Qt::CaseInsensitive))
+		{
+			if (auto v = list_string.takeFirst(); list_string.isEmpty())
+			{
+				return hash_data_.value(v);
+			}
+		}
+		else if (!s.compare("Parameters", Qt::CaseInsensitive))
+		{
+			if (auto v = list_string.takeFirst(); list_string.isEmpty())
+			{
+				return hash_parameters_.value(v);
+			}
+		}
+	}
+	return arg_string;
 }

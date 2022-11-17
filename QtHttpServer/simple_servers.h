@@ -70,7 +70,9 @@ private:
 class Controller
 {
 public:
-	explicit Controller(const QJsonObject& arg_json_object);
+	Controller(const QJsonObject& arg_json_object, QMap<QString, ConnectionPoolSimple::StructSqlServer> arg_map_sql_servers = {});
+	QString GetValue(QString arg_string);
+
 private:
 	struct Sql
 	{
@@ -82,8 +84,9 @@ private:
 	QSet<QString> set_methods_{};
 	QHash<QString, QString> hash_parameters_{};
 	QHash<QString, Sql> hash_sql_{};
-	QMap<QString, QString> map_data_;
+	QHash<QString, QString> hash_data_;
 	QHash<QString, QString> hash_response_{};
+	QMap<QString, ConnectionPoolSimple::StructSqlServer> map_sql_servers_{};
 };
 
 class Controllers

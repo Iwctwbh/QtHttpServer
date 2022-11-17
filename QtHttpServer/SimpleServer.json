@@ -55,14 +55,11 @@
             "SQL1": {
               "SqlName": "SQLite",
               "SqlQuery": "SELECT COUNT(*) FROM tblUser WHERE UserName = {Parameters.username} AND Password = {Parameters.password}",
-              "data": {
-                "result": "{SqlResult}"
-              }
+              "SqlResult": ""
             }
           },
           "data": {
-            "GUID": "{GUID}",
-            "image": "{CaptchaImage}"
+            "IsLogin": "{SQL.SQL1}"
           },
           "Response": {
             "img": "{image}",
