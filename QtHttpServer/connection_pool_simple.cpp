@@ -6,8 +6,41 @@
 #include <QThread>
 #include <QCoreApplication>
 
+static QMap<QString, ConnectionPoolSimple::StructSqlServer> map_sql_servers;
+
+void ConnectionPoolSimple::init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql_servers)
+{
+	for (QJsonObject::const_iterator it = arg_json_object_sql_servers.constBegin(); it != arg_json_object_sql_servers.constEnd(); ++it)
+	{
+		QJsonObject temp_json_object_sql = it.value().toObject();
+		StructSqlServer temp_sql_server
+		{
+			it.key(),
+			temp_json_object_sql.value("SQLDriver").toString(),
+			temp_json_object_sql.value("Host").toString(),
+			temp_json_object_sql.value("Port").toString(),
+			temp_json_object_sql.value("UserName").toString(),
+			temp_json_object_sql.value("Password").toString(),
+			temp_json_object_sql.value("DataBase").toString()
+		};
+
+		AddSqlServer(it.key(), temp_sql_server);
+	}
+}
+
+
+void ConnectionPoolSimple::AddSqlServer(const QString& arg_key, const StructSqlServer& arg_sql_server)
+{
+	map_sql_servers.insert(arg_key, arg_sql_server);
+}
+
+QMap<QString, ConnectionPoolSimple::StructSqlServer>& ConnectionPoolSimple::SqlServers(void)
+{
+	return map_sql_servers;
+}
+
 // 获取数据库连接
-QSqlDatabase ConnectionPoolSimple::openConnection(StructSqlServer arg_struct_sql_server)
+QSqlDatabase ConnectionPoolSimple::OpenConnection(StructSqlServer arg_struct_sql_server)
 {
 	// 1. 创建连接的全名: 基于线程的地址和传入进来的 connectionName，因为同一个线程可能申请创建多个数据库连接
 	// 2. 如果连接已经存在，复用它，而不是重新创建
@@ -54,11 +87,11 @@ QSqlDatabase ConnectionPoolSimple::openConnection(StructSqlServer arg_struct_sql
 		});
 	}
 	arg_struct_sql_server.connection_name = fullConnectionName;
-	return createConnection(arg_struct_sql_server);
+	return CreateConnection(arg_struct_sql_server);
 }
 
 // 创建数据库连接
-QSqlDatabase ConnectionPoolSimple::createConnection(const StructSqlServer& arg_struct_sql_server)
+QSqlDatabase ConnectionPoolSimple::CreateConnection(const StructSqlServer& arg_struct_sql_server)
 {
 	static int sn = 0;
 

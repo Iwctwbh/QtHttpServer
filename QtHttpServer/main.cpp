@@ -46,9 +46,8 @@ int main(int argc, char* argv[])
 					const auto thread_simple_servers = new QThread();
 					const auto simple_servers = new SimpleServers();
 
-					simple_servers->InitSimpleServers(json_object_simple_servers.value(temp_json_key.toString())
-					                                                            .toObject());
-					simple_servers->init_sql_connect_by_json_object(json_object_sql);
+					ConnectionPoolSimple::init_sql_connect_by_json_object(json_object_simple_servers.value(temp_json_key.toString())
+					                                                                                .toObject());
 					simple_servers->moveToThread(thread_simple_servers);
 					thread_simple_servers->start();
 					QObject::connect(simple_servers, &SimpleServers::signal_run,

@@ -52,7 +52,6 @@ public:
 	};
 
 	void InitSimpleServers(const QJsonObject& arg_json_object);
-	void init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql_servers);
 	void Run() const;
 
 	void emit_run();
@@ -86,7 +85,6 @@ private:
 	QHash<QString, Sql> hash_sql_{};
 	QHash<QString, QString> hash_data_;
 	QHash<QString, QString> hash_response_{};
-	QMap<QString, ConnectionPoolSimple::StructSqlServer> map_sql_servers_{};
 };
 
 class Controllers

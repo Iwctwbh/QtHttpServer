@@ -9,27 +9,6 @@ void SimpleServers::InitSimpleServers(const QJsonObject& arg_json_object)
 	json_object_simple_server_ = arg_json_object;
 }
 
-void SimpleServers::init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql_servers)
-{
-	json_object_sql_servers_ = arg_json_object_sql_servers;
-	for (QJsonObject::const_iterator it = json_object_sql_servers_.constBegin(); it != json_object_sql_servers_.constEnd(); ++it)
-	{
-		QJsonObject temp_json_object_sql = it.value().toObject();
-		ConnectionPoolSimple::StructSqlServer temp_sql_server
-		{
-			it.key(),
-			temp_json_object_sql.value("SQLDriver").toString(),
-			temp_json_object_sql.value("Host").toString(),
-			temp_json_object_sql.value("Port").toString(),
-			temp_json_object_sql.value("UserName").toString(),
-			temp_json_object_sql.value("Password").toString(),
-			temp_json_object_sql.value("DataBase").toString()
-		};
-
-		map_sql_servers_.insert(it.key(), temp_sql_server);
-	}
-}
-
 void SimpleServers::Run() const
 {
 	// InitSQL();
@@ -138,7 +117,7 @@ void SimpleServers::Run() const
 													const QJsonObject temp_json_object_sql{json_object_sql_servers.value(bytearray_list_sql_name.first()).toObject()};
 
 													// [1] 从数据库连接池里取得连接
-													QSqlDatabase db = ConnectionPoolSimple::openConnection(map_sql_servers_.value(temp_json_object_sql.value("SqlName").toString()));
+													QSqlDatabase db = ConnectionPoolSimple::OpenConnection(map_sql_servers_.value(temp_json_object_sql.value("SqlName").toString()));
 
 													// [2] 使用连接查询数据库
 													QSqlQuery query(db);
@@ -308,8 +287,6 @@ Controller::Controller(const QJsonObject& arg_json_object, QMap<QString, Connect
 	{
 		hash_response_.insert(it.key(), it.value().toString());
 	}
-
-	map_sql_servers_ = arg_map_sql_servers;
 }
 
 QString Controller::GetValue(QString arg_string)
@@ -328,7 +305,7 @@ QString Controller::GetValue(QString arg_string)
 					if (list_string.isEmpty())
 					{
 						// [1] 从数据库连接池里取得连接
-						QSqlDatabase db = ConnectionPoolSimple::openConnection(map_sql_servers_.value(sql.sql_name));
+						QSqlDatabase db = ConnectionPoolSimple::OpenConnection(ConnectionPoolSimple::SqlServers().value(sql.sql_name));
 
 						// [2] 使用连接查询数据库
 						QSqlQuery query(db);
