@@ -77,7 +77,7 @@ private:
 	{
 		QString sql_name{};
 		QString sql_query{};
-		QHash<QString, QString> data{};
+		QString sql_result{};
 	};
 
 	QSet<QString> set_methods_{};

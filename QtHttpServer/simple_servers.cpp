@@ -259,16 +259,16 @@ Controller::Controller(const QJsonObject& arg_json_object, QMap<QString, Connect
 	{
 		const QJsonObject json_object_sql = it->toObject();
 		const QJsonObject json_object_sql_data = json_object_sql.value("data").toObject();
-		QHash<QString, QString> hash_data{};
+		/*QHash<QString, QString> hash_data{};
 		for (auto it_data = json_object_sql_data.constBegin(); it_data != json_object_sql_data.constEnd(); ++it_data)
 		{
 			hash_data.insert(it_data.key(), it.value().toString());
-		}
+		}*/
 
 		auto sql = Sql{
 			json_object_sql.value("SqlName").toString(),
 			json_object_sql.value("SqlQuery").toString(),
-			hash_data
+			""
 		};
 
 		hash_sql_.insert(it.key(), sql);
@@ -300,35 +300,39 @@ QString Controller::GetValue(QString arg_string)
 			if (auto v = list_string.takeFirst(); hash_sql_.contains(s))
 			{
 				auto sql = hash_sql_.value(v);
-				if (auto v = list_string.takeFirst(); !v.compare("QSqlResult"))
+				if (auto v = list_string.takeFirst(); !v.compare("SqlResult"))
 				{
 					if (list_string.isEmpty())
 					{
-						// [1] 从数据库连接池里取得连接
-						QSqlDatabase db = ConnectionPoolSimple::OpenConnection(ConnectionPoolSimple::SqlServers().value(sql.sql_name));
-
-						// [2] 使用连接查询数据库
-						QSqlQuery query(db);
-						query.prepare(sql.sql_query);
-						for (auto iter : regexp.globalMatch(sql.sql_query))
+						if (sql.sql_result.isEmpty())
 						{
-							query.bindValue(iter.captured(), GetValue(iter.captured()));
-						}
-						query.setForwardOnly(true);
-						query.exec(sql.sql_query);
+							// [1] 从数据库连接池里取得连接
+							const QSqlDatabase db = ConnectionPoolSimple::OpenConnection(ConnectionPoolSimple::SqlServers().value(sql.sql_name));
 
-						QJsonArray json_array_temp{};
-
-						while (query.next())
-						{
-							QJsonObject temp_json_object{};
-							for (int x{0}; x < query.record().count(); ++x)
+							// [2] 使用连接查询数据库
+							QSqlQuery query(db);
+							query.prepare(sql.sql_query);
+							for (auto iter : regexp.globalMatch(sql.sql_query))
 							{
-								temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
+								query.bindValue(iter.captured(), GetValue(iter.captured()));
 							}
-							json_array_temp.push_back(temp_json_object);
+							query.setForwardOnly(true);
+							query.exec(sql.sql_query);
+
+							QJsonArray json_array_temp{};
+
+							while (query.next())
+							{
+								QJsonObject temp_json_object{};
+								for (int x{0}; x < query.record().count(); ++x)
+								{
+									temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
+								}
+								json_array_temp.push_back(temp_json_object);
+							}
+							sql.sql_result = QJsonDocument{json_array_temp}.toJson();
 						}
-						return QJsonDocument{json_array_temp}.toJson();
+						return sql.sql_result;
 					}
 				}
 				else
@@ -346,17 +350,41 @@ QString Controller::GetValue(QString arg_string)
 		}
 		else if (!s.compare("data", Qt::CaseInsensitive))
 		{
-			if (auto v = list_string.takeFirst(); list_string.isEmpty())
+			if (auto v = list_string.takeFirst(); list_string.isEmpty() && hash_data_.contains(v))
 			{
+				for (auto iter : regexp.globalMatch(v))
+				{
+					auto temp_string = GetValue(iter.captured(1));
+					hash_data_.value(v).replace(iter.captured(1), temp_string);
+				}
 				return hash_data_.value(v);
 			}
 		}
 		else if (!s.compare("Parameters", Qt::CaseInsensitive))
 		{
-			if (auto v = list_string.takeFirst(); list_string.isEmpty())
+			if (const QString v = list_string.takeFirst(); list_string.isEmpty() && hash_parameters_.contains(v))
 			{
 				return hash_parameters_.value(v);
 			}
+		}
+		else if (const QFile temp_file{s}; temp_file.exists())
+		{
+			if (const QMimeType temp_mimetype{QMimeDatabase{}.mimeTypeForFile(s)};
+				temp_mimetype.name().startsWith("image/"))
+			{
+				return CommonTools::ConvertImgToBase64(s.toLocal8Bit());
+			}
+		}
+		else if (!s.compare("GUID") || !s.compare("UUID"))
+		{
+			const QUuid uuid_uuid{QUuid::createUuid()};
+			const QString string_base_data{"GUID"};
+			return QUuid::createUuidV5(uuid_uuid, string_base_data).toString();
+		}
+		else if (!s.compare("CaptchaImage"))
+		{
+			QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage())};
+			return bytearray_base64;
 		}
 	}
 	return arg_string;
