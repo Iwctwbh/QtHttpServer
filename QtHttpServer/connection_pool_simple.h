@@ -48,7 +48,7 @@ public:
 	 * \brief 获取所有SqlServers
 	 * \return 所有SqlServers
 	 */
-	static QMap<QString, StructSqlServer>& SqlServers(void);
+	static QMap<QString, StructSqlServer>& SqlServers();
 
 private:
 	/**

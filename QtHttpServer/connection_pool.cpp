@@ -162,7 +162,7 @@ void ConnectionPool::closeConnection(QSqlDatabase connection)
 	}
 }
 
-QSqlDatabase ConnectionPool::createConnection(const QString& connectionName)
+QSqlDatabase ConnectionPool::createConnection(const QString& connectionName) const
 {
 	// 连接已经创建过了，复用它，而不是重新创建
 	if (QSqlDatabase::contains(connectionName))

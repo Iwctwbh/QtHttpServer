@@ -62,14 +62,23 @@ signals:
 private:
 	QJsonObject json_object_simple_server_{};
 
-	QMap<QString, ConnectionPoolSimple::StructSqlServer> map_sql_servers_;
-	QJsonObject json_object_sql_servers_;
+	QMap<QString, ConnectionPoolSimple::StructSqlServer> map_sql_servers_{};
+	QJsonObject json_object_sql_servers_{};
+	quint16 int_port_{};
+	quint16 int_log_level_{};
+	QByteArray string_ip_address_{};
+	QJsonObject json_object_controllers_{};
 };
 
 class Controller
 {
 public:
-	Controller(const QJsonObject& arg_json_object, QMap<QString, ConnectionPoolSimple::StructSqlServer> arg_map_sql_servers = {});
+	Controller();
+	explicit Controller(const QJsonObject& arg_json_object);
+	bool IsInMethods(const QString& arg_method) const;
+	bool IsResponseEmpty() const;
+	void MappingData();
+	QHash<QString, QString> GetResponse();
 	QString GetValue(QString arg_string);
 
 private:
@@ -90,7 +99,14 @@ private:
 class Controllers
 {
 public:
-	Controllers(const QJsonObject& arg_json_object);
+	explicit Controllers(const QJsonObject& arg_json_object);
+
+	/**
+	 * \brief 获取对应控制器
+	 * \param arg_name 控制器名称
+	 * \return 控制器类
+	 */
+	Controller GetController(const QString& arg_name) const;
 private:
 	QHash<QString, Controller> controllers_{};
 };

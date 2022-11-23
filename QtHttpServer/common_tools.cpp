@@ -38,7 +38,7 @@ void CommonTools::MergeImage(cv::Mat& src, cv::Mat& dst)
 	}
 }
 
-cv::Mat CommonTools::CreateCaptchaImage(std::string* out_string_result)
+cv::Mat CommonTools::CreateCaptchaImage(std::string& arg_string_rand)
 {
 	uint16_t uint16_image_width = 300;
 	uint16_t uint16_image_height = 70;
@@ -49,15 +49,9 @@ cv::Mat CommonTools::CreateCaptchaImage(std::string* out_string_result)
 	std::string string_result{};
 	//增加随机字符
 	std::string string_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	std::string string_letter_code;
-	string_letter_code.resize(6);
-	for (char& i : string_letter_code)
-	{
-		i = string_chars[distribution_int(random_engine_seed) % string_chars.length()];
-	}
 	uint16_t uint16_pos_x{0};
 	uint16_t uint16_pos_y{25};
-	for (char char_char : string_letter_code)
+	for (char char_char : arg_string_rand)
 	{
 		cv::Mat mat_image_copy(uint16_image_height, uint16_image_width, CV_8UC3, cv::Scalar(255, 255, 255));
 		std::string string_char{char_char};
@@ -105,10 +99,6 @@ cv::Mat CommonTools::CreateCaptchaImage(std::string* out_string_result)
 		                   distribution_int(random_engine_seed) % 255),
 		        1, 8, false);
 	}
-	if (out_string_result)
-	{
-		*out_string_result = string_result;
-	}
 	return mat_image;
 }
 
@@ -134,4 +124,39 @@ void CommonTools::InsertJsonValueToJsonObject(QJsonObject& arg_json_object, cons
 	{
 		arg_json_object.insert(arg_string_key, arg_json_value);
 	}
+}
+
+//we use unordered_map here and use closing brackets as key and opening brackets as values
+bool CommonTools::ValidParentheses(const std::string arg_string)
+{
+	const std::string temp_string = "[](){}";
+	std::unordered_map<char, char> mp = {{']', '['}, {')', '('}, {'}', '{'}};
+	// we create a new stack
+	std::stack<char> stk;
+	// we use a for loop to iterate through every element in the string. This is called range based forloops in C++.
+	for (auto x : arg_string)
+	{
+		if (temp_string.contains(x))
+		{
+			//if the string consists of opening brackets then we push them to the stack
+			if (x == '[' || x == '(' || x == '{')
+			{
+				stk.push(x);
+			}
+			//else if if the string contains closing brackets we check if the stack is empty( which means we have a closing bracket without opening bracket)
+			//we also check if the top of the stack is the value of the key in the map.
+			//if any of those are true we return false
+			else if (stk.size() == 0 || stk.top() != mp[x])
+			{
+				return false;
+			}
+			// if the stack is not empty and we get matched for a key value pair in map then we pop the top bracket from stack               
+			else
+			{
+				stk.pop();
+			}
+		}
+	}
+	//we return stack.empty() function which returns true if the stack is empty or false if stack have some elements.
+	return stk.empty();
 }

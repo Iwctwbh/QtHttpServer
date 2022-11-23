@@ -25,7 +25,7 @@ private:
 	ConnectionPool();
 	ConnectionPool(const ConnectionPool& other);
 	ConnectionPool& operator=(const ConnectionPool& other);
-	QSqlDatabase createConnection(const QString& connectionName); // 创建数据库连接
+	QSqlDatabase createConnection(const QString& connectionName) const; // 创建数据库连接
 
 	QQueue<QString> usedConnectionNames; // 已使用的数据库连接名
 	QQueue<QString> unusedConnectionNames; // 未使用的数据库连接名

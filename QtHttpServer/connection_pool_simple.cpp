@@ -6,7 +6,7 @@
 #include <QThread>
 #include <QCoreApplication>
 
-static QMap<QString, ConnectionPoolSimple::StructSqlServer> map_sql_servers;
+static QMap<QString, ConnectionPoolSimple::StructSqlServer> kMapSqlServers;
 
 void ConnectionPoolSimple::init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql_servers)
 {
@@ -31,12 +31,12 @@ void ConnectionPoolSimple::init_sql_connect_by_json_object(const QJsonObject& ar
 
 void ConnectionPoolSimple::AddSqlServer(const QString& arg_key, const StructSqlServer& arg_sql_server)
 {
-	map_sql_servers.insert(arg_key, arg_sql_server);
+	kMapSqlServers.insert(arg_key, arg_sql_server);
 }
 
-QMap<QString, ConnectionPoolSimple::StructSqlServer>& ConnectionPoolSimple::SqlServers(void)
+QMap<QString, ConnectionPoolSimple::StructSqlServer>& ConnectionPoolSimple::SqlServers()
 {
-	return map_sql_servers;
+	return kMapSqlServers;
 }
 
 // 获取数据库连接

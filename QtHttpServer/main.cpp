@@ -35,9 +35,8 @@ int main(int argc, char* argv[])
 #pragma endregion
 
 				// SimpleServers
-				QJsonObject json_object_simple_servers{
-					json_document_simple_server_file.object()
-					                                .value("SimpleServers")
+				const QJsonObject json_object_simple_servers{
+					json_document_simple_server_file.object().value("SimpleServers")
 					                                .toObject()
 				};
 				std::ranges::for_each(json_object_simple_servers.keys(), [&](const QJsonValue& temp_json_key)
@@ -48,6 +47,10 @@ int main(int argc, char* argv[])
 
 					ConnectionPoolSimple::init_sql_connect_by_json_object(json_object_simple_servers.value(temp_json_key.toString())
 					                                                                                .toObject());
+
+					simple_servers->InitSimpleServers(json_object_simple_servers.value(temp_json_key.toString())
+					                                                            .toObject());
+
 					simple_servers->moveToThread(thread_simple_servers);
 					thread_simple_servers->start();
 					QObject::connect(simple_servers, &SimpleServers::signal_run,

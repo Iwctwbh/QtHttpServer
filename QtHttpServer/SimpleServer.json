@@ -27,16 +27,25 @@
   },
   "SimpleServers": {
     "vueWebServer": {
-      "SimpleServerIpAddress": "127.0.0.1",
+      "SimpleServerIpAddress": "10.11.12.6",
       "SimpleServerPort": "18080",
       "SimpleServerLogLevel": "1",
       "Controllers": {
         "/captchaImage": {
-          "Methods": "POST",
+          "Methods": "GET, POST",
           "Parameters": {},
+          "SQL": {
+            "SQL1": {
+              "SqlName": "SQLite",
+              "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ('{data.GUID}','{data.imagecode}')",
+              "SqlResult": ""
+            }
+          },
           "data": {
             "GUID": "{GUID}",
-            "image": "{CaptchaImage}"
+            "image": "{CaptchaImage}",
+            "imagecode": "",
+            "sql": "{SQL.SQL1.SqlResult}"
           },
           "Response": {
             "img": "{image}",

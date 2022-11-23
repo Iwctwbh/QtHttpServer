@@ -1,220 +1,76 @@
 ﻿#include "simple_servers.h"
 
+static const QRegularExpression kRegexp{R"({(.*)})"};
+static const QRegularExpression kSqlRegexp{R"('{(.*?)}')"};
+
 SimpleServers::SimpleServers(QObject* parent) : QObject(parent)
 {
 }
 
 void SimpleServers::InitSimpleServers(const QJsonObject& arg_json_object)
 {
-	json_object_simple_server_ = arg_json_object;
+	string_ip_address_ = arg_json_object.value("SimpleServerIpAddress")
+	                                    .toString()
+	                                    .toLocal8Bit()
+	                                    .data();
+
+	int_port_ = arg_json_object.value("SimpleServerPort")
+	                           .toString()
+	                           .toUInt();
+
+	int_log_level_ = arg_json_object.value("SimpleServerLogLevel").toString().toUInt();
+
+	json_object_controllers_ = arg_json_object.value("Controllers").toObject();
 }
 
 void SimpleServers::Run() const
 {
-	// InitSQL();
-
 	LogHelperHandler handler_log_helper{};
 	crow::logger::setHandler(&handler_log_helper);
 
 	crow::App<SimpleServerMiddleware> simple_app_crow{};
-	simple_app_crow.loglevel(static_cast<crow::LogLevel>(json_object_simple_server_.value("SimpleServerLogLevel").toString().toInt()));
+	simple_app_crow.loglevel(static_cast<crow::LogLevel>(int_log_level_));
 
 	// CROW_CATCHALL_ROUTE(simple_app_crow);
-	const QJsonObject json_object_controllers{json_object_simple_server_.value("Controllers").toObject()};
+	const Controllers controllers{json_object_controllers_};
 	simple_app_crow.catchall_route()([&](const crow::request& request_request)
 	{
 		crow::response response_response{};
 		response_response.code = 200;
 		response_response.body = "";
 
-		if (!json_object_controllers.contains(request_request.url.data()))
+		Controller controller = controllers.GetController(request_request.url.data());
+
+		if (QString temp_method{method_name(request_request.method).data()};
+			controller.IsInMethods(temp_method))
 		{
 			response_response.code = 404;
 		}
 		else
 		{
-			if (QJsonObject json_object_controller{json_object_controllers.value(request_request.url.data()).toObject()};
-				!json_object_controller.value("Methods")
-				                       .toString()
-				                       .toUpper()
-				                       .replace(" ", "")
-				                       .split(',')
-				                       .contains(method_name(request_request.method).data()))
+			if (controller.IsResponseEmpty())
 			{
-				response_response.code = 404;
+				// send to thread and return
 			}
-			else
+
+			controller.MappingData();
+
+			QJsonObject temp_json_object{};
+			const QHash<QString, QString> copy_hash_response = controller.GetResponse();
+			for (auto it{copy_hash_response.constBegin()}; it != copy_hash_response.constEnd(); ++it)
 			{
-				if (!json_object_controller.contains("Response"))
-				{
-					response_response.code = 200;
-				}
-				else
-				{
-					QJsonObject json_object_response{json_object_controller.value("Response").toObject()};
-					if (json_object_response.isEmpty())
-					{
-						response_response.code = 200;
-					}
-					else
-					{
-						QJsonObject json_object_data{json_object_controller.value("data").toObject()};
-						std::function<void(QJsonObject& arg_json_object_parent, QJsonObject& arg_json_object_child)> function_resolve_data_mapping = [&](QJsonObject& arg_json_object_parent, QJsonObject& arg_json_object_child)-> void
-						{
-							std::ranges::for_each(arg_json_object_child.keys(), [&](const QString& temp_bytearray_child_key) -> void
-							{
-								if (const QRegularExpression regexp{R"({(.*?)})"};
-									regexp.match(temp_bytearray_child_key).hasMatch())
-								{
-									QJsonObject temp_json_object_child_child{arg_json_object_child.value(temp_bytearray_child_key).toObject()};
-									function_resolve_data_mapping(arg_json_object_child, temp_json_object_child_child);
-									std::ranges::for_each(temp_json_object_child_child.keys(), [&](const QString& temp_string_key)-> void
-									{
-										arg_json_object_child.insert(temp_string_key, temp_json_object_child_child.value(temp_string_key));
-									});
-									arg_json_object_child.remove(temp_bytearray_child_key);
-								}
-								else
-								{
-									if (arg_json_object_child.value(temp_bytearray_child_key).isObject())
-									{
-										QJsonObject json_object_child_value = arg_json_object_child.value(temp_bytearray_child_key).toObject();
-										function_resolve_data_mapping(arg_json_object_child, json_object_child_value);
-										arg_json_object_child.insert(temp_bytearray_child_key, json_object_child_value);
-									}
-									else
-									{
-										QString copy_string_value{arg_json_object_child.value(temp_bytearray_child_key).toString()};
-										for (const QRegularExpressionMatch& temp_regex_match : regexp.globalMatch(copy_string_value))
-										{
-											QByteArray bytearray_data{arg_json_object_child.value(temp_bytearray_child_key).toString().toLocal8Bit()};
-
-											if (const QFile temp_file{bytearray_data};
-												temp_file.exists())
-											{
-												if (const QMimeType temp_mimetype{QMimeDatabase{}.mimeTypeForFile(bytearray_data)};
-													temp_mimetype.name().startsWith("image/"))
-												{
-													copy_string_value.replace(temp_regex_match.captured(), CommonTools::ConvertImgToBase64(bytearray_data));
-												}
-											}
-											else if (!bytearray_data.compare("{GUID}") || !bytearray_data.compare("{UUID}"))
-											{
-												QUuid uuid_uuid{QUuid::createUuid()};
-												QString string_base_data{request_request.remote_ip_address.data()};
-												copy_string_value.replace(temp_regex_match.captured(), QUuid::createUuidV5(uuid_uuid, string_base_data).toString());
-											}
-											else if (!bytearray_data.compare("{CaptchaImage}"))
-											{
-												QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage())};
-												copy_string_value.replace(temp_regex_match.captured(), bytearray_base64);
-											}
-											else if (bytearray_data.indexOf('.') != -1)
-											{
-												QByteArrayList bytearray_list_sql_name{QByteArrayList::fromList(bytearray_data.replace('{', "").replace('}', "").split('.'))};
-												if (QJsonObject json_object_sql_servers{json_object_controller.value("SQL").toObject()}; json_object_sql_servers.contains(bytearray_list_sql_name.first()))
-												{
-													const QJsonObject temp_json_object_sql{json_object_sql_servers.value(bytearray_list_sql_name.first()).toObject()};
-
-													// [1] 从数据库连接池里取得连接
-													QSqlDatabase db = ConnectionPoolSimple::OpenConnection(map_sql_servers_.value(temp_json_object_sql.value("SqlName").toString()));
-
-													// [2] 使用连接查询数据库
-													QSqlQuery query(db);
-													query.prepare(temp_json_object_sql.value("SqlQuery").toString());
-													query.bindValue("{}", "");
-
-													query.setForwardOnly(true);
-													query.exec(temp_json_object_sql.value("SqlQuery").toString());
-													QJsonArray json_array_temp{};
-
-													while (query.next())
-													{
-														QJsonObject temp_json_object{};
-														for (int x{0}; x < query.record().count(); ++x)
-														{
-															temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
-														}
-														json_array_temp.push_back(temp_json_object);
-													}
-													copy_string_value.replace(temp_regex_match.captured(), QJsonDocument{json_array_temp}.toJson());
-												}
-											}
-										}
-										CommonTools::InsertJsonValueToJsonObject(arg_json_object_child, temp_bytearray_child_key, copy_string_value);
-									}
-								}
-							});
-						};
-						function_resolve_data_mapping(json_object_controller, json_object_data);
-
-						std::ranges::for_each(json_object_response.keys(), [&](const QString& temp_string_key) -> void
-						{
-							QString temp_string_value{json_object_response.value(temp_string_key).toString()};
-							for (const QRegularExpression regexp{R"({(.*?)})"};
-							     const QRegularExpressionMatch& temp_regex_match : regexp.globalMatch(temp_string_value))
-							{
-								QJsonObject copy_json_object_data{json_object_data};
-								QString out_temp_string{};
-								bool bool_is_json_object{true};
-								bool bool_is_success{true};
-								for (const QString& temp_string : temp_regex_match.captured(1).split('.'))
-								{
-									out_temp_string = temp_string;
-									if (bool_is_json_object)
-									{
-										if (copy_json_object_data.contains(temp_string))
-										{
-											if (copy_json_object_data.value(temp_string).isObject())
-											{
-												copy_json_object_data = copy_json_object_data.value(temp_string).toObject();
-											}
-											else
-											{
-												bool_is_json_object = false;
-											}
-										}
-									}
-									else
-									{
-										bool_is_success = false;
-										break;
-									}
-								}
-								if (bool_is_success)
-								{
-									if (copy_json_object_data.value(out_temp_string).isObject())
-									{
-										temp_string_value.replace(temp_regex_match.captured(), QJsonDocument{copy_json_object_data.value(out_temp_string).toObject()}.toJson());
-									}
-									else if (copy_json_object_data.value(out_temp_string).isArray())
-									{
-										temp_string_value.replace(temp_regex_match.captured(), QJsonDocument{copy_json_object_data.value(out_temp_string).toArray()}.toJson());
-									}
-									else
-									{
-										temp_string_value.replace(temp_regex_match.captured(), copy_json_object_data.value(out_temp_string).toString());
-									}
-								}
-							}
-							CommonTools::InsertJsonValueToJsonObject(json_object_response, temp_string_key, temp_string_value);
-						});
-					}
-					response_response.body = static_cast<std::string>(QJsonDocument{json_object_response}.toJson());
-				}
+				temp_json_object.insert(it.key(), it.value());
 			}
+
+			response_response.body = static_cast<std::string>(QJsonDocument{temp_json_object}.toJson());
 		}
+
 		return response_response;
 	});
 
 	auto sync_app_crow =
-		simple_app_crow.bindaddr(json_object_simple_server_.value("SimpleServerIpAddress")
-		                                                   .toString()
-		                                                   .toLocal8Bit()
-		                                                   .data())
-		               .port(json_object_simple_server_.value("SimpleServerPort")
-		                                               .toString()
-		                                               .toUInt())
+		simple_app_crow.bindaddr(string_ip_address_.data())
+		               .port(int_port_)
 		               .multithreaded()
 		               .run_async();
 }
@@ -232,7 +88,17 @@ Controllers::Controllers(const QJsonObject& arg_json_object)
 	}
 }
 
-Controller::Controller(const QJsonObject& arg_json_object, QMap<QString, ConnectionPoolSimple::StructSqlServer> arg_map_sql_servers)
+Controller Controllers::GetController(const QString& arg_name) const
+{
+	if (controllers_.contains(arg_name))
+	{
+		return controllers_.value(arg_name);
+	}
+	Controller temp_controller{};
+	return temp_controller;
+}
+
+Controller::Controller(const QJsonObject& arg_json_object)
 {
 	// methods
 	std::ranges::for_each(
@@ -289,103 +155,155 @@ Controller::Controller(const QJsonObject& arg_json_object, QMap<QString, Connect
 	}
 }
 
-QString Controller::GetValue(QString arg_string)
+Controller::Controller()
 {
-	if (const QRegularExpression regexp{R"({(.*?)})"};
-		regexp.match(arg_string).hasMatch())
+}
+
+bool Controller::IsInMethods(const QString& arg_method) const
+{
+	return hash_parameters_.contains(arg_method);
+}
+
+bool Controller::IsResponseEmpty() const
+{
+	return hash_response_.isEmpty();
+}
+
+void Controller::MappingData()
+{
+	for (auto it = hash_data_.constBegin(); it != hash_data_.constEnd(); ++it)
 	{
-		auto list_string = regexp.match(arg_string).captured(1).split('.');
-		if (auto s = list_string.takeFirst(); !s.compare("Sql", Qt::CaseInsensitive))
+		if (auto match = kRegexp.match(it.value());
+			match.hasMatch()
+			&& CommonTools::ValidParentheses(match.captured()
+			                                      .toLocal8Bit()
+			                                      .constData()))
 		{
-			if (auto v = list_string.takeFirst(); hash_sql_.contains(s))
-			{
-				auto sql = hash_sql_.value(v);
-				if (auto v = list_string.takeFirst(); !v.compare("SqlResult"))
-				{
-					if (list_string.isEmpty())
-					{
-						if (sql.sql_result.isEmpty())
-						{
-							// [1] 从数据库连接池里取得连接
-							const QSqlDatabase db = ConnectionPoolSimple::OpenConnection(ConnectionPoolSimple::SqlServers().value(sql.sql_name));
-
-							// [2] 使用连接查询数据库
-							QSqlQuery query(db);
-							query.prepare(sql.sql_query);
-							for (auto iter : regexp.globalMatch(sql.sql_query))
-							{
-								query.bindValue(iter.captured(), GetValue(iter.captured()));
-							}
-							query.setForwardOnly(true);
-							query.exec(sql.sql_query);
-
-							QJsonArray json_array_temp{};
-
-							while (query.next())
-							{
-								QJsonObject temp_json_object{};
-								for (int x{0}; x < query.record().count(); ++x)
-								{
-									temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
-								}
-								json_array_temp.push_back(temp_json_object);
-							}
-							sql.sql_result = QJsonDocument{json_array_temp}.toJson();
-						}
-						return sql.sql_result;
-					}
-				}
-				else
-				{
-					if (!v.compare("SqlName", Qt::CaseInsensitive))
-					{
-						return sql.sql_name;
-					}
-					if (!v.compare("SqlQuery", Qt::CaseInsensitive))
-					{
-						return sql.sql_query;
-					}
-				}
-			}
-		}
-		else if (!s.compare("data", Qt::CaseInsensitive))
-		{
-			if (auto v = list_string.takeFirst(); list_string.isEmpty() && hash_data_.contains(v))
-			{
-				for (auto iter : regexp.globalMatch(v))
-				{
-					auto temp_string = GetValue(iter.captured(1));
-					hash_data_.value(v).replace(iter.captured(1), temp_string);
-				}
-				return hash_data_.value(v);
-			}
-		}
-		else if (!s.compare("Parameters", Qt::CaseInsensitive))
-		{
-			if (const QString v = list_string.takeFirst(); list_string.isEmpty() && hash_parameters_.contains(v))
-			{
-				return hash_parameters_.value(v);
-			}
-		}
-		else if (const QFile temp_file{s}; temp_file.exists())
-		{
-			if (const QMimeType temp_mimetype{QMimeDatabase{}.mimeTypeForFile(s)};
-				temp_mimetype.name().startsWith("image/"))
-			{
-				return CommonTools::ConvertImgToBase64(s.toLocal8Bit());
-			}
-		}
-		else if (!s.compare("GUID") || !s.compare("UUID"))
-		{
-			const QUuid uuid_uuid{QUuid::createUuid()};
-			const QString string_base_data{"GUID"};
-			return QUuid::createUuidV5(uuid_uuid, string_base_data).toString();
-		}
-		else if (!s.compare("CaptchaImage"))
-		{
-			QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage())};
-			return bytearray_base64;
+			hash_data_.insert(it.key(), GetValue(match.captured(1)));
 		}
 	}
+
+	for (auto it = hash_response_.constBegin(); it != hash_response_.constEnd(); ++it)
+	{
+		if (auto match = kRegexp.match(it.value());
+			match.hasMatch()
+			&& CommonTools::ValidParentheses(match.captured()
+			                                      .toLocal8Bit()
+			                                      .constData()))
+		{
+			hash_response_.insert(it.key(), GetValue(kRegexp.match(it.value()).captured(1)));
+		}
+	}
+}
+
+QHash<QString, QString> Controller::GetResponse()
+{
+	return hash_response_;
+}
+
+QString Controller::GetValue(QString arg_string)
+{
+	auto list_string = arg_string.split('.');
+	if (auto s = list_string.takeFirst(); !s.compare("Sql", Qt::CaseInsensitive))
+	{
+		if (auto v = list_string.takeFirst(); hash_sql_.contains(v))
+		{
+			auto sql = hash_sql_.value(v);
+			if (auto vv = list_string.takeFirst(); !vv.compare("SqlResult"))
+			{
+				if (list_string.isEmpty())
+				{
+					if (sql.sql_result.isEmpty())
+					{
+						// [1] 从数据库连接池里取得连接
+						const QSqlDatabase db = ConnectionPoolSimple::OpenConnection(ConnectionPoolSimple::SqlServers().value(sql.sql_name));
+
+						// [2] 使用连接查询数据库
+						QSqlQuery query(db);
+						query.prepare(sql.sql_query);
+						for (auto it : kSqlRegexp.globalMatch(sql.sql_query))
+						{
+							query.bindValue(it.captured(), GetValue(it.captured(1)));
+						}
+						query.setForwardOnly(true);
+						query.exec(sql.sql_query);
+
+						QJsonArray json_array_temp{};
+
+						while (query.next())
+						{
+							QJsonObject temp_json_object{};
+							for (int x{0}; x < query.record().count(); ++x)
+							{
+								temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
+							}
+							json_array_temp.push_back(temp_json_object);
+						}
+						sql.sql_result = QJsonDocument{json_array_temp}.toJson();
+					}
+					return sql.sql_result;
+				}
+			}
+			else
+			{
+				if (!vv.compare("SqlName", Qt::CaseInsensitive))
+				{
+					return sql.sql_name;
+				}
+				if (!vv.compare("SqlQuery", Qt::CaseInsensitive))
+				{
+					return sql.sql_query;
+				}
+			}
+		}
+	}
+	else if (!s.compare("data", Qt::CaseInsensitive))
+	{
+		if (auto v = list_string.takeFirst(); list_string.isEmpty() && hash_data_.contains(v))
+		{
+			for (auto iter : kRegexp.globalMatch(v))
+			{
+				auto temp_string = GetValue(iter.captured(1));
+				hash_data_.value(v).replace(iter.captured(1), temp_string);
+			}
+			return hash_data_.value(v);
+		}
+	}
+	else if (!s.compare("Parameters", Qt::CaseInsensitive))
+	{
+		if (const QString v = list_string.takeFirst(); list_string.isEmpty() && hash_parameters_.contains(v))
+		{
+			return hash_parameters_.value(v);
+		}
+	}
+	else if (const QFile temp_file{s}; temp_file.exists())
+	{
+		if (const QMimeType temp_mimetype{QMimeDatabase{}.mimeTypeForFile(s)};
+			temp_mimetype.name().startsWith("image/"))
+		{
+			return CommonTools::ConvertImgToBase64(s.toLocal8Bit());
+		}
+	}
+	else if (!s.compare("GUID") || !s.compare("UUID"))
+	{
+		const QUuid uuid_uuid{QUuid::createUuid()};
+		const QString string_base_data{"GUID"};
+		return QUuid::createUuidV5(uuid_uuid, string_base_data).toString();
+	}
+	else if (!s.compare("CaptchaImage"))
+	{
+		std::default_random_engine random_engine_seed(static_cast<unsigned int>(time(nullptr)));
+		std::uniform_int_distribution<> distribution_int(0, 32767);
+		std::string string_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		std::string string_letter_code;
+		string_letter_code.resize(6);
+		for (char& i : string_letter_code)
+		{
+			i = string_chars[distribution_int(random_engine_seed) % string_chars.length()];
+		}
+		QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage(string_chars))};
+		return bytearray_base64;
+	}
+
 	return arg_string;
 }
