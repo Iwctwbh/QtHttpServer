@@ -27,11 +27,12 @@ int main(int argc, char* argv[])
 				error_json_parse.error == QJsonParseError::NoError && json_document_simple_server_file.isObject())
 			{
 #pragma region SQL
-				QJsonObject json_object_sql{
+				const QJsonObject json_object_sql{
 					json_document_simple_server_file.object()
 					                                .value("SQL")
 					                                .toObject()
 				};
+				ConnectionPoolSimple::init_sql_connect_by_json_object(json_object_sql);
 #pragma endregion
 
 				// SimpleServers
@@ -44,9 +45,6 @@ int main(int argc, char* argv[])
 					// QThread
 					const auto thread_simple_servers = new QThread();
 					const auto simple_servers = new SimpleServers();
-
-					ConnectionPoolSimple::init_sql_connect_by_json_object(json_object_simple_servers.value(temp_json_key.toString())
-					                                                                                .toObject());
 
 					simple_servers->InitSimpleServers(json_object_simple_servers.value(temp_json_key.toString())
 					                                                            .toObject());

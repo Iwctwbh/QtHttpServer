@@ -79,7 +79,7 @@ public:
 	bool IsResponseEmpty() const;
 	void MappingData();
 	QHash<QString, QString> GetResponse();
-	QString GetValue(QString arg_string);
+	QString GetValue(QString arg_value, QString arg_key);
 
 private:
 	struct Sql

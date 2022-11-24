@@ -19,6 +19,7 @@ public:
 		QString user_name;
 		QString password;
 		QString data_base;
+		QString path;
 	};
 
 	/**

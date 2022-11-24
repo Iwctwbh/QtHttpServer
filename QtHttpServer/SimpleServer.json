@@ -9,12 +9,8 @@
   },
   "SQL": {
     "SQLite": {
-      "SQLDriver": "MSSQL",
-      "Host": "xxx.xx.xxx.xxx",
-      "Port": "1433",
-      "UserName": "username",
-      "Password": "password",
-      "DataBase": "database"
+      "SQLDriver": "SQLITE",
+      "Path": "C:\\sqlite\\simple_servers.db"
     },
     "MSSQL": {
       "SQLDriver": "MSSQL",
@@ -37,18 +33,18 @@
           "SQL": {
             "SQL1": {
               "SqlName": "SQLite",
-              "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ('{data.GUID}','{data.imagecode}')",
+              "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ({data.GUID}, {data.imagecode})",
               "SqlResult": ""
             }
           },
           "data": {
             "GUID": "{GUID}",
             "image": "{CaptchaImage}",
-            "imagecode": "",
-            "sql": "{SQL.SQL1.SqlResult}"
+            "sql": "{SQL.SQL1.SqlResult}",
+            "imagecode": ""
           },
           "Response": {
-            "img": "{image}",
+            "img": "{data.image}",
             "captchaEnabled": "true"
           }
         },

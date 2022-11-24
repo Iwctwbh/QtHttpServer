@@ -1,7 +1,7 @@
 ﻿#include "simple_servers.h"
 
 static const QRegularExpression kRegexp{R"({(.*)})"};
-static const QRegularExpression kSqlRegexp{R"('{(.*?)}')"};
+static const QRegularExpression kSqlRegexp{R"({(.*?)})"};
 
 SimpleServers::SimpleServers(QObject* parent) : QObject(parent)
 {
@@ -149,7 +149,7 @@ Controller::Controller(const QJsonObject& arg_json_object)
 
 	// Response
 	const QJsonObject json_object_response = arg_json_object.value("Response").toObject();
-	for (auto it = json_object_data.constBegin(); it != json_object_data.constEnd(); ++it)
+	for (auto it = json_object_response.constBegin(); it != json_object_response.constEnd(); ++it)
 	{
 		hash_response_.insert(it.key(), it.value().toString());
 	}
@@ -179,7 +179,7 @@ void Controller::MappingData()
 			                                      .toLocal8Bit()
 			                                      .constData()))
 		{
-			hash_data_.insert(it.key(), GetValue(match.captured(1)));
+			hash_data_.insert(it.key(), GetValue(match.captured(1), it.key()));
 		}
 	}
 
@@ -191,7 +191,7 @@ void Controller::MappingData()
 			                                      .toLocal8Bit()
 			                                      .constData()))
 		{
-			hash_response_.insert(it.key(), GetValue(kRegexp.match(it.value()).captured(1)));
+			hash_response_.insert(it.key(), GetValue(match.captured(1), it.key()));
 		}
 	}
 }
@@ -201,32 +201,32 @@ QHash<QString, QString> Controller::GetResponse()
 	return hash_response_;
 }
 
-QString Controller::GetValue(QString arg_string)
+QString Controller::GetValue(QString arg_value, QString arg_key = "")
 {
-	auto list_string = arg_string.split('.');
+	auto list_string = arg_value.split('.');
 	if (auto s = list_string.takeFirst(); !s.compare("Sql", Qt::CaseInsensitive))
 	{
 		if (auto v = list_string.takeFirst(); hash_sql_.contains(v))
 		{
-			auto sql = hash_sql_.value(v);
+			auto [sql_name, sql_query, sql_result] = hash_sql_.value(v);
 			if (auto vv = list_string.takeFirst(); !vv.compare("SqlResult"))
 			{
 				if (list_string.isEmpty())
 				{
-					if (sql.sql_result.isEmpty())
+					if (sql_result.isEmpty())
 					{
 						// [1] 从数据库连接池里取得连接
-						const QSqlDatabase db = ConnectionPoolSimple::OpenConnection(ConnectionPoolSimple::SqlServers().value(sql.sql_name));
+						const QSqlDatabase db = ConnectionPoolSimple::OpenConnection(ConnectionPoolSimple::SqlServers().value(sql_name));
 
 						// [2] 使用连接查询数据库
 						QSqlQuery query(db);
-						query.prepare(sql.sql_query);
-						for (auto it : kSqlRegexp.globalMatch(sql.sql_query))
+						query.prepare(sql_query);
+						for (auto it : kSqlRegexp.globalMatch(sql_query))
 						{
 							query.bindValue(it.captured(), GetValue(it.captured(1)));
 						}
 						query.setForwardOnly(true);
-						query.exec(sql.sql_query);
+						query.exec();
 
 						QJsonArray json_array_temp{};
 
@@ -239,20 +239,20 @@ QString Controller::GetValue(QString arg_string)
 							}
 							json_array_temp.push_back(temp_json_object);
 						}
-						sql.sql_result = QJsonDocument{json_array_temp}.toJson();
+						sql_result = QJsonDocument{json_array_temp}.toJson();
 					}
-					return sql.sql_result;
+					return sql_result;
 				}
 			}
 			else
 			{
 				if (!vv.compare("SqlName", Qt::CaseInsensitive))
 				{
-					return sql.sql_name;
+					return sql_name;
 				}
 				if (!vv.compare("SqlQuery", Qt::CaseInsensitive))
 				{
-					return sql.sql_query;
+					return sql_query;
 				}
 			}
 		}
@@ -261,10 +261,12 @@ QString Controller::GetValue(QString arg_string)
 	{
 		if (auto v = list_string.takeFirst(); list_string.isEmpty() && hash_data_.contains(v))
 		{
-			for (auto iter : kRegexp.globalMatch(v))
+			for (auto it : kRegexp.globalMatch(hash_data_.value(v)))
 			{
-				auto temp_string = GetValue(iter.captured(1));
-				hash_data_.value(v).replace(iter.captured(1), temp_string);
+				if (auto temp_string = GetValue(it.captured(1), v); temp_string.compare(it.captured(1)))
+				{
+					hash_data_.insert(v, temp_string);
+				}
 			}
 			return hash_data_.value(v);
 		}
@@ -302,8 +304,15 @@ QString Controller::GetValue(QString arg_string)
 			i = string_chars[distribution_int(random_engine_seed) % string_chars.length()];
 		}
 		QByteArray bytearray_base64{CommonTools::ConvertMatToBase64(CommonTools::CreateCaptchaImage(string_chars))};
+		if (hash_data_.contains(arg_key))
+		{
+			if (hash_data_.contains(arg_key + "code"))
+			{
+				hash_data_.insert(arg_key + "code", QString::fromStdString(string_letter_code));
+			}
+		}
 		return bytearray_base64;
 	}
 
-	return arg_string;
+	return arg_value;
 }

@@ -13,6 +13,7 @@ void ConnectionPoolSimple::init_sql_connect_by_json_object(const QJsonObject& ar
 	for (QJsonObject::const_iterator it = arg_json_object_sql_servers.constBegin(); it != arg_json_object_sql_servers.constEnd(); ++it)
 	{
 		QJsonObject temp_json_object_sql = it.value().toObject();
+
 		StructSqlServer temp_sql_server
 		{
 			it.key(),
@@ -21,7 +22,8 @@ void ConnectionPoolSimple::init_sql_connect_by_json_object(const QJsonObject& ar
 			temp_json_object_sql.value("Port").toString(),
 			temp_json_object_sql.value("UserName").toString(),
 			temp_json_object_sql.value("Password").toString(),
-			temp_json_object_sql.value("DataBase").toString()
+			temp_json_object_sql.value("DataBase").toString(),
+			temp_json_object_sql.value("Path").toString()
 		};
 
 		AddSqlServer(it.key(), temp_sql_server);
@@ -95,7 +97,7 @@ QSqlDatabase ConnectionPoolSimple::CreateConnection(const StructSqlServer& arg_s
 {
 	static int sn = 0;
 
-	if (const auto& [connection_name,sql_driver, host, port, user_name, password, data_base]{arg_struct_sql_server};
+	if (const auto& [connection_name,sql_driver, host, port, user_name, password, data_base, path]{arg_struct_sql_server};
 		!sql_driver.compare("MSSQL", Qt::CaseInsensitive))
 	{
 		QSqlDatabase db = QSqlDatabase::addDatabase("QODBC", connection_name);
@@ -128,6 +130,16 @@ QSqlDatabase ConnectionPoolSimple::CreateConnection(const StructSqlServer& arg_s
 		db.setDatabaseName("qt");
 		db.setUserName("root");
 		db.setPassword("root");*/
+	}
+	else if (!sql_driver.compare("SQLITE"))
+	{
+		QSqlDatabase db{QSqlDatabase::addDatabase("QSQLITE", connection_name)};
+		db.setDatabaseName(path);
+		if (db.open())
+		{
+			qDebug().noquote() << QString("Connection created: %1, sn: %2").arg(connection_name).arg(++sn);
+			return db;
+		}
 	}
 
 	return QSqlDatabase();
