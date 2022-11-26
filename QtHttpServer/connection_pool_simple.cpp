@@ -10,7 +10,8 @@ static QMap<QString, ConnectionPoolSimple::StructSqlServer> kMapSqlServers;
 
 void ConnectionPoolSimple::init_sql_connect_by_json_object(const QJsonObject& arg_json_object_sql_servers)
 {
-	for (QJsonObject::const_iterator it = arg_json_object_sql_servers.constBegin(); it != arg_json_object_sql_servers.constEnd(); ++it)
+	for (QJsonObject::const_iterator it = arg_json_object_sql_servers.constBegin(); it != arg_json_object_sql_servers.
+	     constEnd(); ++it)
 	{
 		QJsonObject temp_json_object_sql = it.value().toObject();
 
@@ -52,7 +53,7 @@ QSqlDatabase ConnectionPoolSimple::OpenConnection(StructSqlServer arg_struct_sql
 
 	// [1] 创建连接的全名: 基于线程的地址和传入进来的 connectionName，因为同一个线程可能申请创建多个数据库连接
 	QString baseConnectionName = "conn_" + QString::number(quint64(QThread::currentThread()), 16);
-	QString fullConnectionName = baseConnectionName + arg_struct_sql_server.connection_name;
+	QString fullConnectionName = baseConnectionName + "_" + arg_struct_sql_server.connection_name;
 
 	if (QSqlDatabase::contains(fullConnectionName))
 	{
@@ -97,7 +98,9 @@ QSqlDatabase ConnectionPoolSimple::CreateConnection(const StructSqlServer& arg_s
 {
 	static int sn = 0;
 
-	if (const auto& [connection_name,sql_driver, host, port, user_name, password, data_base, path]{arg_struct_sql_server};
+	if (const auto& [connection_name,sql_driver, host, port, user_name, password, data_base, path]{
+			arg_struct_sql_server
+		};
 		!sql_driver.compare("MSSQL", Qt::CaseInsensitive))
 	{
 		QSqlDatabase db = QSqlDatabase::addDatabase("QODBC", connection_name);

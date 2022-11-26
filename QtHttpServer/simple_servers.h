@@ -51,6 +51,8 @@ public:
 		}
 	};
 
+	static void InitRegex(const QString& arg_string);
+
 	void InitSimpleServers(const QJsonObject& arg_json_object);
 	void Run() const;
 

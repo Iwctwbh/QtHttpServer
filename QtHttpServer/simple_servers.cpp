@@ -1,10 +1,17 @@
 ﻿#include "simple_servers.h"
 
-static const QRegularExpression kRegexp{R"({(.*)})"};
-static const QRegularExpression kSqlRegexp{R"({(.*?)})"};
+static QRegularExpression regex_string{R"({(.*?)})"};
 
 SimpleServers::SimpleServers(QObject* parent) : QObject(parent)
 {
+}
+
+void SimpleServers::InitRegex(const QString& arg_string)
+{
+	if (!arg_string.isEmpty())
+	{
+		regex_string = QRegularExpression(arg_string);
+	}
 }
 
 void SimpleServers::InitSimpleServers(const QJsonObject& arg_json_object)
@@ -173,7 +180,7 @@ void Controller::MappingData()
 {
 	for (auto it = hash_data_.constBegin(); it != hash_data_.constEnd(); ++it)
 	{
-		if (auto match = kRegexp.match(it.value());
+		if (auto match = regex_string.match(it.value());
 			match.hasMatch()
 			&& CommonTools::ValidParentheses(match.captured()
 			                                      .toLocal8Bit()
@@ -185,7 +192,7 @@ void Controller::MappingData()
 
 	for (auto it = hash_response_.constBegin(); it != hash_response_.constEnd(); ++it)
 	{
-		if (auto match = kRegexp.match(it.value());
+		if (auto match = regex_string.match(it.value());
 			match.hasMatch()
 			&& CommonTools::ValidParentheses(match.captured()
 			                                      .toLocal8Bit()
@@ -216,12 +223,13 @@ QString Controller::GetValue(QString arg_value, QString arg_key = "")
 					if (sql_result.isEmpty())
 					{
 						// [1] 从数据库连接池里取得连接
-						const QSqlDatabase db = ConnectionPoolSimple::OpenConnection(ConnectionPoolSimple::SqlServers().value(sql_name));
+						const QSqlDatabase db = ConnectionPoolSimple::OpenConnection(
+							ConnectionPoolSimple::SqlServers().value(sql_name));
 
 						// [2] 使用连接查询数据库
 						QSqlQuery query(db);
 						query.prepare(sql_query);
-						for (auto it : kSqlRegexp.globalMatch(sql_query))
+						for (auto it : regex_string.globalMatch(sql_query))
 						{
 							query.bindValue(it.captured(), GetValue(it.captured(1)));
 						}
@@ -235,7 +243,8 @@ QString Controller::GetValue(QString arg_value, QString arg_key = "")
 							QJsonObject temp_json_object{};
 							for (int x{0}; x < query.record().count(); ++x)
 							{
-								temp_json_object.insert(query.record().fieldName(x), QJsonValue::fromVariant(query.value(x)));
+								temp_json_object.insert(query.record().fieldName(x),
+								                        QJsonValue::fromVariant(query.value(x)));
 							}
 							json_array_temp.push_back(temp_json_object);
 						}
@@ -261,7 +270,7 @@ QString Controller::GetValue(QString arg_value, QString arg_key = "")
 	{
 		if (auto v = list_string.takeFirst(); list_string.isEmpty() && hash_data_.contains(v))
 		{
-			for (auto it : kRegexp.globalMatch(hash_data_.value(v)))
+			for (auto it : regex_string.globalMatch(hash_data_.value(v)))
 			{
 				if (auto temp_string = GetValue(it.captured(1), v); temp_string.compare(it.captured(1)))
 				{

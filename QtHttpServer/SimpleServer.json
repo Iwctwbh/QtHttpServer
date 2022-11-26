@@ -7,6 +7,9 @@
       "password": "admin123"
     }
   },
+  "Config": {
+    "Regex": "{(.*?)}"
+  },
   "SQL": {
     "SQLite": {
       "SQLDriver": "SQLITE",
