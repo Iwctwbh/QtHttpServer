@@ -36,7 +36,7 @@
           "SQL": {
             "SQL1": {
               "SqlName": "SQLite",
-              "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ({data.GUID}, {data.imagecode})",
+              "SqlQuery": "INSERT INTO tblCaptchaImage (UUID, CaptchaImageResult) VALUES ({data.GUID}, {data.captcha.code})",
               "SqlResult": ""
             }
           },
@@ -44,7 +44,11 @@
             "GUID": "{GUID}",
             "image": "{CaptchaImage}",
             "sql": "{SQL.SQL1.SqlResult}",
-            "imagecode": ""
+            "imagecode": "",
+            "captcha": {
+              "image": "{CaptchaImage}",
+              "code": "{CaptchaImageCode}"
+            }
           },
           "Response": {
             "img": "{data.image}",

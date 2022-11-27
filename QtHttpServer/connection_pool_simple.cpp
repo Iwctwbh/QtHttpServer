@@ -52,13 +52,14 @@ QSqlDatabase ConnectionPoolSimple::OpenConnection(StructSqlServer arg_struct_sql
 	// 4. 线程结束时，释放在此线程中创建的数据库连接
 
 	// [1] 创建连接的全名: 基于线程的地址和传入进来的 connectionName，因为同一个线程可能申请创建多个数据库连接
-	QString baseConnectionName = "conn_" + QString::number(quint64(QThread::currentThread()), 16);
-	QString fullConnectionName = baseConnectionName + "_" + arg_struct_sql_server.connection_name;
+	const QString base_connection_name = "conn_" + QString::number(reinterpret_cast<quint64>(QThread::currentThread()),
+	                                                               16);
+	QString full_connection_name = base_connection_name + "_" + arg_struct_sql_server.connection_name;
 
-	if (QSqlDatabase::contains(fullConnectionName))
+	if (QSqlDatabase::contains(full_connection_name))
 	{
 		// [2] 如果连接已经存在，复用它，而不是重新创建
-		QSqlDatabase existingDb = QSqlDatabase::database(fullConnectionName);
+		QSqlDatabase existingDb = QSqlDatabase::database(full_connection_name);
 
 		// [2.1] 返回连接前访问数据库，如果连接断开，可以重新建立连接 (测试: 关闭数据库几分钟后再启动，再次访问数据库)
 		/*QSqlQuery query("SELECT 1", existingDb);
@@ -80,16 +81,16 @@ QSqlDatabase ConnectionPoolSimple::OpenConnection(StructSqlServer arg_struct_sql
 	if (qApp != nullptr)
 	{
 		// [4] 线程结束时，释放在此线程中创建的数据库连接
-		QObject::connect(QThread::currentThread(), &QThread::finished, qApp, [fullConnectionName]
+		QObject::connect(QThread::currentThread(), &QThread::finished, qApp, [full_connection_name]
 		{
-			if (QSqlDatabase::contains(fullConnectionName))
+			if (QSqlDatabase::contains(full_connection_name))
 			{
-				QSqlDatabase::removeDatabase(fullConnectionName);
-				qDebug().noquote() << QString("Connection deleted: %1").arg(fullConnectionName);
+				QSqlDatabase::removeDatabase(full_connection_name);
+				qDebug().noquote() << QString("Connection deleted: %1").arg(full_connection_name);
 			}
 		});
 	}
-	arg_struct_sql_server.connection_name = fullConnectionName;
+	arg_struct_sql_server.connection_name = full_connection_name;
 	return CreateConnection(arg_struct_sql_server);
 }
 

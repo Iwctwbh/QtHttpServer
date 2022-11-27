@@ -228,10 +228,12 @@ QString Controller::GetValue(QString arg_value, QString arg_key = "")
 
 						// [2] 使用连接查询数据库
 						QSqlQuery query(db);
-						query.prepare(sql_query);
-						for (auto it : regex_string.globalMatch(sql_query))
+						QString copy_sql_query{sql_query};
+						copy_sql_query.replace(regex_string, "?");
+						query.prepare(copy_sql_query);
+						for (const auto& it : regex_string.globalMatch(sql_query))
 						{
-							query.bindValue(it.captured(), GetValue(it.captured(1)));
+							query.addBindValue(GetValue(it.captured(1)));
 						}
 						query.setForwardOnly(true);
 						query.exec();
@@ -303,8 +305,8 @@ QString Controller::GetValue(QString arg_value, QString arg_key = "")
 	}
 	else if (!s.compare("CaptchaImage"))
 	{
-		std::default_random_engine random_engine_seed(static_cast<unsigned int>(time(nullptr)));
-		std::uniform_int_distribution<> distribution_int(0, 32767);
+		std::default_random_engine random_engine_seed(static_cast<unsigned int>(QDateTime::currentMSecsSinceEpoch()));
+		std::uniform_int_distribution distribution_int(0, 32767);
 		std::string string_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 		std::string string_letter_code;
 		string_letter_code.resize(6);
